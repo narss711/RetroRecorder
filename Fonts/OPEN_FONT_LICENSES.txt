@@ -1,0 +1,28 @@
+RetroRecorder bundled open fonts
+
+The following font files are bundled for the English-only interface font
+selector.
+
+Press Start 2P
+- File: PressStart2P-Regular.ttf
+- Source: https://github.com/google/fonts/tree/main/ofl/pressstart2p
+- License: SIL Open Font License 1.1
+- Copyright: Copyright 2012 The Press Start 2P Project Authors.
+
+VT323
+- File: VT323-Regular.ttf
+- Source: https://github.com/google/fonts/tree/main/ofl/vt323
+- License: SIL Open Font License 1.1
+- Copyright: Copyright 2011, The VT323 Project Authors.
+
+Silkscreen
+- File: Silkscreen-Regular.ttf
+- Source: https://github.com/google/fonts/tree/main/ofl/silkscreen
+- License: SIL Open Font License 1.1
+- Copyright: Copyright 2001 The Silkscreen Project Authors.
+
+Special Elite
+- File: SpecialElite-Regular.ttf
+- Source: https://github.com/google/fonts/tree/main/apache/specialelite
+- License: Apache License 2.0
+- Copyright: Copyright Astigmatic.

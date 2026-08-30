@@ -1,0 +1,15 @@
+DerivedData/
+DerivedData*/
+DeployDerivedData*/
+build/
+Pods/
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+.DS_Store
+*.mobileprovision
+DeepFilterNet/DeepFilterNet3_onnx.tar.gz

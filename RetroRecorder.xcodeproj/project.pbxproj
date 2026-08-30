@@ -1,0 +1,795 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		000000000000000000000201 /* RetroRecorderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000101 /* RetroRecorderApp.swift */; };
+		000000000000000000000202 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000102 /* ContentView.swift */; };
+		000000000000000000000203 /* RetroDeckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000103 /* RetroDeckView.swift */; };
+		000000000000000000000204 /* AudioInputOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000104 /* AudioInputOption.swift */; };
+		000000000000000000000205 /* AudioSessionInputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000105 /* AudioSessionInputManager.swift */; };
+		000000000000000000000206 /* RecordingItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000106 /* RecordingItem.swift */; };
+		000000000000000000000207 /* RecordingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000107 /* RecordingStore.swift */; };
+		000000000000000000000210 /* CloudSyncStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000130 /* CloudSyncStore.swift */; };
+		000000000000000000000208 /* SpeechTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000108 /* SpeechTranscriber.swift */; };
+		000000000000000000000209 /* AudioRecorderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000109 /* AudioRecorderViewModel.swift */; };
+		000000000000000000000217 /* RecordingPlaybackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000122 /* RecordingPlaybackView.swift */; };
+		000000000000000000000218 /* RecordingLiveActivitySupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000123 /* RecordingLiveActivitySupport.swift */; };
+		000000000000000000000219 /* RecordingLiveActivitySupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000123 /* RecordingLiveActivitySupport.swift */; };
+		000000000000000000000220 /* RecordingShortcutIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000124 /* RecordingShortcutIntent.swift */; };
+		000000000000000000000221 /* RecordingShortcutIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000124 /* RecordingShortcutIntent.swift */; };
+		000000000000000000000222 /* RetroRecorderShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000125 /* RetroRecorderShortcuts.swift */; };
+		000000000000000000000223 /* SilenceRemovalProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000126 /* SilenceRemovalProcessor.swift */; };
+		000000000000000000000225 /* ShadertoyMetalEffectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000128 /* ShadertoyMetalEffectsView.swift */; };
+		000000000000000000000226 /* ShadertoyMetalEffects.metal in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000129 /* ShadertoyMetalEffects.metal */; };
+		000000000000000000000212 /* MediaWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000115 /* MediaWidget.swift */; };
+		000000000000000000000214 /* MediaWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 000000000000000000000114 /* MediaWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		000000000000000000000301 /* RNNoiseBridge.c in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000401 /* RNNoiseBridge.c */; };
+		000000000000000000000302 /* denoise.c in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000403 /* denoise.c */; };
+		000000000000000000000303 /* rnn.c in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000404 /* rnn.c */; };
+		000000000000000000000304 /* pitch.c in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000405 /* pitch.c */; };
+		000000000000000000000305 /* kiss_fft.c in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000406 /* kiss_fft.c */; };
+		000000000000000000000306 /* celt_lpc.c in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000407 /* celt_lpc.c */; };
+		000000000000000000000307 /* nnet.c in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000408 /* nnet.c */; };
+		000000000000000000000308 /* nnet_default.c in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000409 /* nnet_default.c */; };
+		000000000000000000000309 /* parse_lpcnet_weights.c in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000410 /* parse_lpcnet_weights.c */; };
+		000000000000000000000310 /* rnnoise_data.c in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000411 /* rnnoise_data.c */; };
+		000000000000000000000311 /* rnnoise_tables.c in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000412 /* rnnoise_tables.c */; };
+		000000000000000000000601 /* model_1.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000501 /* model_1.onnx */; };
+		000000000000000000000602 /* model_2.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000502 /* model_2.onnx */; };
+		000000000000000000000801 /* enc.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000701 /* enc.onnx */; };
+		000000000000000000000802 /* erb_dec.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000702 /* erb_dec.onnx */; };
+		000000000000000000000803 /* df_dec.onnx in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000703 /* df_dec.onnx */; };
+		000000000000000000000804 /* config.ini in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000704 /* config.ini */; };
+		000000000000000000000911 /* PressStart2P-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000901 /* PressStart2P-Regular.ttf */; };
+		000000000000000000000912 /* VT323-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000902 /* VT323-Regular.ttf */; };
+		000000000000000000000913 /* Silkscreen-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000903 /* Silkscreen-Regular.ttf */; };
+		000000000000000000000914 /* SpecialElite-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000904 /* SpecialElite-Regular.ttf */; };
+		000000000000000000000915 /* OPEN_FONT_LICENSES.txt in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000905 /* OPEN_FONT_LICENSES.txt */; };
+		000000000000000000000916 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000906 /* Assets.xcassets */; };
+		B5D2D516C990E03AAE794451 /* Pods_RetroRecorder.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B30EBBA20EE02534DA179B17 /* Pods_RetroRecorder.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		000000000000000000000029 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000000000024;
+			remoteInfo = MediaWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		000000000000000000000030 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000023 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				000000000000000000000214 /* MediaWidget.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		000000000000000000000003 /* RetroRecorder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RetroRecorder.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000101 /* RetroRecorderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetroRecorderApp.swift; sourceTree = "<group>"; };
+		000000000000000000000102 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		000000000000000000000103 /* RetroDeckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetroDeckView.swift; sourceTree = "<group>"; };
+		000000000000000000000104 /* AudioInputOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioInputOption.swift; sourceTree = "<group>"; };
+		000000000000000000000105 /* AudioSessionInputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionInputManager.swift; sourceTree = "<group>"; };
+		000000000000000000000106 /* RecordingItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingItem.swift; sourceTree = "<group>"; };
+		000000000000000000000107 /* RecordingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingStore.swift; sourceTree = "<group>"; };
+		000000000000000000000108 /* SpeechTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechTranscriber.swift; sourceTree = "<group>"; };
+		000000000000000000000109 /* AudioRecorderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorderViewModel.swift; sourceTree = "<group>"; };
+		000000000000000000000130 /* CloudSyncStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncStore.swift; sourceTree = "<group>"; };
+		000000000000000000000110 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		000000000000000000000122 /* RecordingPlaybackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingPlaybackView.swift; sourceTree = "<group>"; };
+		000000000000000000000123 /* RecordingLiveActivitySupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingLiveActivitySupport.swift; sourceTree = "<group>"; };
+		000000000000000000000124 /* RecordingShortcutIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingShortcutIntent.swift; sourceTree = "<group>"; };
+		000000000000000000000125 /* RetroRecorderShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetroRecorderShortcuts.swift; sourceTree = "<group>"; };
+		000000000000000000000126 /* SilenceRemovalProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SilenceRemovalProcessor.swift; sourceTree = "<group>"; };
+		000000000000000000000128 /* ShadertoyMetalEffectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadertoyMetalEffectsView.swift; sourceTree = "<group>"; };
+		000000000000000000000129 /* ShadertoyMetalEffects.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ShadertoyMetalEffects.metal; sourceTree = "<group>"; };
+		000000000000000000000113 /* RetroRecorder.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RetroRecorder.entitlements; sourceTree = "<group>"; };
+		000000000000000000000114 /* MediaWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MediaWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000115 /* MediaWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaWidget.swift; sourceTree = "<group>"; };
+		000000000000000000000116 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		000000000000000000000117 /* MediaWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MediaWidget.entitlements; sourceTree = "<group>"; };
+		000000000000000000000400 /* RNNoiseBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNNoiseBridge.h; sourceTree = "<group>"; };
+		000000000000000000000401 /* RNNoiseBridge.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = RNNoiseBridge.c; sourceTree = "<group>"; };
+		000000000000000000000402 /* rnnoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = rnnoise.h; sourceTree = "<group>"; };
+		000000000000000000000403 /* denoise.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = denoise.c; sourceTree = "<group>"; };
+		000000000000000000000404 /* rnn.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = rnn.c; sourceTree = "<group>"; };
+		000000000000000000000405 /* pitch.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = pitch.c; sourceTree = "<group>"; };
+		000000000000000000000406 /* kiss_fft.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = kiss_fft.c; sourceTree = "<group>"; };
+		000000000000000000000407 /* celt_lpc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = celt_lpc.c; sourceTree = "<group>"; };
+		000000000000000000000408 /* nnet.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = nnet.c; sourceTree = "<group>"; };
+		000000000000000000000409 /* nnet_default.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = nnet_default.c; sourceTree = "<group>"; };
+		000000000000000000000410 /* parse_lpcnet_weights.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = parse_lpcnet_weights.c; sourceTree = "<group>"; };
+		000000000000000000000411 /* rnnoise_data.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = rnnoise_data.c; sourceTree = "<group>"; };
+		000000000000000000000412 /* rnnoise_tables.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = rnnoise_tables.c; sourceTree = "<group>"; };
+		000000000000000000000413 /* COPYING */ = {isa = PBXFileReference; lastKnownFileType = text; path = COPYING; sourceTree = "<group>"; };
+		000000000000000000000414 /* RetroRecorder-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RetroRecorder-Bridging-Header.h"; sourceTree = "<group>"; };
+		000000000000000000000501 /* model_1.onnx */ = {isa = PBXFileReference; lastKnownFileType = file; path = model_1.onnx; sourceTree = "<group>"; };
+		000000000000000000000502 /* model_2.onnx */ = {isa = PBXFileReference; lastKnownFileType = file; path = model_2.onnx; sourceTree = "<group>"; };
+		000000000000000000000701 /* enc.onnx */ = {isa = PBXFileReference; lastKnownFileType = file; path = enc.onnx; sourceTree = "<group>"; };
+		000000000000000000000702 /* erb_dec.onnx */ = {isa = PBXFileReference; lastKnownFileType = file; path = erb_dec.onnx; sourceTree = "<group>"; };
+		000000000000000000000703 /* df_dec.onnx */ = {isa = PBXFileReference; lastKnownFileType = file; path = df_dec.onnx; sourceTree = "<group>"; };
+		000000000000000000000704 /* config.ini */ = {isa = PBXFileReference; lastKnownFileType = text; path = config.ini; sourceTree = "<group>"; };
+		000000000000000000000901 /* PressStart2P-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "PressStart2P-Regular.ttf"; sourceTree = "<group>"; };
+		000000000000000000000902 /* VT323-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "VT323-Regular.ttf"; sourceTree = "<group>"; };
+		000000000000000000000903 /* Silkscreen-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Silkscreen-Regular.ttf"; sourceTree = "<group>"; };
+		000000000000000000000904 /* SpecialElite-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SpecialElite-Regular.ttf"; sourceTree = "<group>"; };
+		000000000000000000000905 /* OPEN_FONT_LICENSES.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OPEN_FONT_LICENSES.txt; sourceTree = "<group>"; };
+		000000000000000000000906 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		47F92EFC3B37A32456A66A4B /* Pods-RetroRecorder.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RetroRecorder.release.xcconfig"; path = "Target Support Files/Pods-RetroRecorder/Pods-RetroRecorder.release.xcconfig"; sourceTree = "<group>"; };
+		B30EBBA20EE02534DA179B17 /* Pods_RetroRecorder.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RetroRecorder.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		EF6870DEAD559160780B0892 /* Pods-RetroRecorder.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RetroRecorder.debug.xcconfig"; path = "Target Support Files/Pods-RetroRecorder/Pods-RetroRecorder.debug.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		000000000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B5D2D516C990E03AAE794451 /* Pods_RetroRecorder.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000021 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		000000000000000000000004 = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000005 /* RetroRecorder */,
+				000000000000000000000430 /* RNNoise */,
+				000000000000000000000503 /* DTLN */,
+				000000000000000000000700 /* DeepFilterNet */,
+				000000000000000000000900 /* Fonts */,
+				000000000000000000000016 /* Shared */,
+				000000000000000000000017 /* MediaWidget */,
+				000000000000000000000006 /* Products */,
+				FD3CB299A12D023AC726DE5F /* Pods */,
+				140AB61CDB10B1FF63380DF2 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		000000000000000000000005 /* RetroRecorder */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000101 /* RetroRecorderApp.swift */,
+				000000000000000000000102 /* ContentView.swift */,
+				000000000000000000000125 /* RetroRecorderShortcuts.swift */,
+				000000000000000000000122 /* RecordingPlaybackView.swift */,
+				000000000000000000000126 /* SilenceRemovalProcessor.swift */,
+				000000000000000000000128 /* ShadertoyMetalEffectsView.swift */,
+				000000000000000000000129 /* ShadertoyMetalEffects.metal */,
+				000000000000000000000103 /* RetroDeckView.swift */,
+				000000000000000000000104 /* AudioInputOption.swift */,
+				000000000000000000000105 /* AudioSessionInputManager.swift */,
+				000000000000000000000106 /* RecordingItem.swift */,
+				000000000000000000000107 /* RecordingStore.swift */,
+				000000000000000000000130 /* CloudSyncStore.swift */,
+				000000000000000000000108 /* SpeechTranscriber.swift */,
+				000000000000000000000109 /* AudioRecorderViewModel.swift */,
+				000000000000000000000906 /* Assets.xcassets */,
+				000000000000000000000414 /* RetroRecorder-Bridging-Header.h */,
+				000000000000000000000110 /* Info.plist */,
+				000000000000000000000113 /* RetroRecorder.entitlements */,
+			);
+			path = RetroRecorder;
+			sourceTree = "<group>";
+		};
+		000000000000000000000006 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000003 /* RetroRecorder.app */,
+				000000000000000000000114 /* MediaWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		000000000000000000000016 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000123 /* RecordingLiveActivitySupport.swift */,
+				000000000000000000000124 /* RecordingShortcutIntent.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		000000000000000000000017 /* MediaWidget */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000115 /* MediaWidget.swift */,
+				000000000000000000000116 /* Info.plist */,
+				000000000000000000000117 /* MediaWidget.entitlements */,
+			);
+			path = MediaWidget;
+			sourceTree = "<group>";
+		};
+		000000000000000000000430 /* RNNoise */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000400 /* RNNoiseBridge.h */,
+				000000000000000000000401 /* RNNoiseBridge.c */,
+				000000000000000000000431 /* include */,
+				000000000000000000000432 /* src */,
+				000000000000000000000413 /* COPYING */,
+			);
+			path = RNNoise;
+			sourceTree = "<group>";
+		};
+		000000000000000000000431 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000402 /* rnnoise.h */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		000000000000000000000432 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000403 /* denoise.c */,
+				000000000000000000000404 /* rnn.c */,
+				000000000000000000000405 /* pitch.c */,
+				000000000000000000000406 /* kiss_fft.c */,
+				000000000000000000000407 /* celt_lpc.c */,
+				000000000000000000000408 /* nnet.c */,
+				000000000000000000000409 /* nnet_default.c */,
+				000000000000000000000410 /* parse_lpcnet_weights.c */,
+				000000000000000000000411 /* rnnoise_data.c */,
+				000000000000000000000412 /* rnnoise_tables.c */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		000000000000000000000503 /* DTLN */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000501 /* model_1.onnx */,
+				000000000000000000000502 /* model_2.onnx */,
+			);
+			path = DTLN;
+			sourceTree = "<group>";
+		};
+		000000000000000000000700 /* DeepFilterNet */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000701 /* enc.onnx */,
+				000000000000000000000702 /* erb_dec.onnx */,
+				000000000000000000000703 /* df_dec.onnx */,
+				000000000000000000000704 /* config.ini */,
+			);
+			path = DeepFilterNet;
+			sourceTree = "<group>";
+		};
+		000000000000000000000900 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000901 /* PressStart2P-Regular.ttf */,
+				000000000000000000000902 /* VT323-Regular.ttf */,
+				000000000000000000000903 /* Silkscreen-Regular.ttf */,
+				000000000000000000000904 /* SpecialElite-Regular.ttf */,
+				000000000000000000000905 /* OPEN_FONT_LICENSES.txt */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		140AB61CDB10B1FF63380DF2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B30EBBA20EE02534DA179B17 /* Pods_RetroRecorder.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		FD3CB299A12D023AC726DE5F /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				EF6870DEAD559160780B0892 /* Pods-RetroRecorder.debug.xcconfig */,
+				47F92EFC3B37A32456A66A4B /* Pods-RetroRecorder.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		000000000000000000000002 /* RetroRecorder */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 000000000000000000000011 /* Build configuration list for PBXNativeTarget "RetroRecorder" */;
+			buildPhases = (
+				2BB771F3D027569B50FE3E2E /* [CP] Check Pods Manifest.lock */,
+				000000000000000000000007 /* Sources */,
+				000000000000000000000008 /* Frameworks */,
+				000000000000000000000009 /* Resources */,
+				000000000000000000000030 /* Embed Frameworks */,
+				000000000000000000000023 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				000000000000000000000028 /* PBXTargetDependency */,
+			);
+			name = RetroRecorder;
+			productName = RetroRecorder;
+			productReference = 000000000000000000000003 /* RetroRecorder.app */;
+			productType = "com.apple.product-type.application";
+		};
+		000000000000000000000024 /* MediaWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 000000000000000000000025 /* Build configuration list for PBXNativeTarget "MediaWidget" */;
+			buildPhases = (
+				000000000000000000000020 /* Sources */,
+				000000000000000000000021 /* Frameworks */,
+				000000000000000000000022 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MediaWidget;
+			productName = MediaWidget;
+			productReference = 000000000000000000000114 /* MediaWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		000000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2660;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					000000000000000000000002 = {
+						CreatedOnToolsVersion = 26.6;
+						SystemCapabilities = {
+							com.apple.iCloud = {
+								enabled = 1;
+							};
+						};
+					};
+					000000000000000000000024 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+				};
+			};
+			buildConfigurationList = 000000000000000000000010 /* Build configuration list for PBXProject "RetroRecorder" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 000000000000000000000004;
+			packageReferences = (
+			);
+			productRefGroup = 000000000000000000000006 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				000000000000000000000002 /* RetroRecorder */,
+				000000000000000000000024 /* MediaWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		000000000000000000000009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000601 /* model_1.onnx in Resources */,
+				000000000000000000000602 /* model_2.onnx in Resources */,
+				000000000000000000000801 /* enc.onnx in Resources */,
+				000000000000000000000802 /* erb_dec.onnx in Resources */,
+				000000000000000000000803 /* df_dec.onnx in Resources */,
+				000000000000000000000804 /* config.ini in Resources */,
+				000000000000000000000911 /* PressStart2P-Regular.ttf in Resources */,
+				000000000000000000000912 /* VT323-Regular.ttf in Resources */,
+				000000000000000000000913 /* Silkscreen-Regular.ttf in Resources */,
+				000000000000000000000914 /* SpecialElite-Regular.ttf in Resources */,
+				000000000000000000000915 /* OPEN_FONT_LICENSES.txt in Resources */,
+				000000000000000000000916 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000022 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		2BB771F3D027569B50FE3E2E /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RetroRecorder-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		000000000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000201 /* RetroRecorderApp.swift in Sources */,
+				000000000000000000000202 /* ContentView.swift in Sources */,
+				000000000000000000000203 /* RetroDeckView.swift in Sources */,
+				000000000000000000000204 /* AudioInputOption.swift in Sources */,
+				000000000000000000000205 /* AudioSessionInputManager.swift in Sources */,
+				000000000000000000000218 /* RecordingLiveActivitySupport.swift in Sources */,
+				000000000000000000000220 /* RecordingShortcutIntent.swift in Sources */,
+				000000000000000000000222 /* RetroRecorderShortcuts.swift in Sources */,
+				000000000000000000000206 /* RecordingItem.swift in Sources */,
+				000000000000000000000207 /* RecordingStore.swift in Sources */,
+				000000000000000000000210 /* CloudSyncStore.swift in Sources */,
+				000000000000000000000217 /* RecordingPlaybackView.swift in Sources */,
+				000000000000000000000223 /* SilenceRemovalProcessor.swift in Sources */,
+				000000000000000000000225 /* ShadertoyMetalEffectsView.swift in Sources */,
+				000000000000000000000226 /* ShadertoyMetalEffects.metal in Sources */,
+				000000000000000000000208 /* SpeechTranscriber.swift in Sources */,
+				000000000000000000000209 /* AudioRecorderViewModel.swift in Sources */,
+				000000000000000000000301 /* RNNoiseBridge.c in Sources */,
+				000000000000000000000302 /* denoise.c in Sources */,
+				000000000000000000000303 /* rnn.c in Sources */,
+				000000000000000000000304 /* pitch.c in Sources */,
+				000000000000000000000305 /* kiss_fft.c in Sources */,
+				000000000000000000000306 /* celt_lpc.c in Sources */,
+				000000000000000000000307 /* nnet.c in Sources */,
+				000000000000000000000308 /* nnet_default.c in Sources */,
+				000000000000000000000309 /* parse_lpcnet_weights.c in Sources */,
+				000000000000000000000310 /* rnnoise_data.c in Sources */,
+				000000000000000000000311 /* rnnoise_tables.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000020 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000212 /* MediaWidget.swift in Sources */,
+				000000000000000000000219 /* RecordingLiveActivitySupport.swift in Sources */,
+				000000000000000000000221 /* RecordingShortcutIntent.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		000000000000000000000028 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000000000024 /* MediaWidget */;
+			targetProxy = 000000000000000000000029 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		000000000000000000000012 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		000000000000000000000013 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		000000000000000000000014 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = EF6870DEAD559160780B0892 /* Pods-RetroRecorder.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RetroRecorder/RetroRecorder.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 8;
+				DEVELOPMENT_TEAM = X3GSF73VM2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/RNNoise/include",
+					"$(PROJECT_DIR)/RNNoise/src",
+				);
+				INFOPLIST_FILE = RetroRecorder/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lutan.RetroRecorder;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "RetroRecorder/RetroRecorder-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		000000000000000000000015 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 47F92EFC3B37A32456A66A4B /* Pods-RetroRecorder.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RetroRecorder/RetroRecorder.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 8;
+				DEVELOPMENT_TEAM = X3GSF73VM2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/RNNoise/include",
+					"$(PROJECT_DIR)/RNNoise/src",
+				);
+				INFOPLIST_FILE = RetroRecorder/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lutan.RetroRecorder;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "RetroRecorder/RetroRecorder-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		000000000000000000000026 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = MediaWidget/MediaWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 8;
+				DEVELOPMENT_TEAM = X3GSF73VM2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MediaWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lutan.RetroRecorder.MediaWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		000000000000000000000027 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = MediaWidget/MediaWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 8;
+				DEVELOPMENT_TEAM = X3GSF73VM2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MediaWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lutan.RetroRecorder.MediaWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		000000000000000000000010 /* Build configuration list for PBXProject "RetroRecorder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000000000012 /* Debug */,
+				000000000000000000000013 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		000000000000000000000011 /* Build configuration list for PBXNativeTarget "RetroRecorder" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000000000014 /* Debug */,
+				000000000000000000000015 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		000000000000000000000025 /* Build configuration list for PBXNativeTarget "MediaWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000000000026 /* Debug */,
+				000000000000000000000027 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 000000000000000000000001 /* Project object */;
+}
