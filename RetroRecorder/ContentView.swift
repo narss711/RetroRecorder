@@ -364,6 +364,7 @@ enum AppCopy: Hashable {
     case liveText
     case liveTextPlaceholder
     case startRec
+    case historySwipeHint
 }
 
 extension AppCopy {
@@ -489,6 +490,8 @@ extension AppCopy {
             return "正在识别语音输入..."
         case .startRec:
             return "开始录制"
+        case .historySwipeHint:
+            return "上滑约 1/5 快速进入历史录音"
         }
     }
 
@@ -614,6 +617,8 @@ extension AppCopy {
             return "Listening for speech..."
         case .startRec:
             return "Start Rec"
+        case .historySwipeHint:
+            return "SWIPE UP 1/5 TO OPEN HISTORY"
         }
     }
 }
@@ -1361,6 +1366,30 @@ extension TranscriptionEngine {
     }
 }
 
+private struct HistorySwipeHintView: View {
+    @Environment(\.appLanguage) private var appLanguage
+
+    let progress: CGFloat
+
+    var body: some View {
+        VStack(spacing: 5) {
+            Image(systemName: progress >= 1 ? "arrow.up.circle.fill" : "arrow.up")
+                .font(.system(size: 17, weight: .black))
+
+            Text(appLanguage.text(.historySwipeHint).uppercased())
+                .retroFont(size: 10, weight: .black, design: .monospaced)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+        }
+        .foregroundStyle(.pixelInk.opacity(0.54 + progress * 0.4))
+        .frame(maxWidth: .infinity)
+        .frame(height: 70)
+        .scaleEffect(0.96 + progress * 0.04)
+        .animation(.easeOut(duration: 0.12), value: progress)
+        .accessibilityLabel(appLanguage.text(.historySwipeHint))
+    }
+}
+
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
@@ -1368,6 +1397,7 @@ struct ContentView: View {
     @State private var showingSettings = false
     @State private var showingHistory = false
     @State private var tagToast: RecordingTagToast?
+    @GestureState private var historySwipeTranslation: CGFloat = 0
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
     @AppStorage(InterfaceRetroFont.storageKey) private var interfaceFontRaw = InterfaceRetroFont.system.rawValue
     @AppStorage(InterfaceColorTheme.storageKey) private var interfaceColorThemeRaw = InterfaceColorTheme.pocketOlive.rawValue
@@ -1459,6 +1489,14 @@ struct ContentView: View {
                                 recorder: recorder,
                                 onAddTag: addTagWithToast
                             )
+
+                            if !recorder.isRecording {
+                                HistorySwipeHintView(
+                                    progress: historySwipeProgress(
+                                        viewportHeight: proxy.size.height
+                                    )
+                                )
+                            }
                         }
                         .padding(isCompactHeight ? 7 : 10)
                         .frame(maxWidth: .infinity)
@@ -1471,6 +1509,28 @@ struct ContentView: View {
                         .padding(.horizontal, 7)
                         .padding(.vertical, 6)
                     }
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 16)
+                            .updating($historySwipeTranslation) { value, state, _ in
+                                guard !recorder.isRecording else {
+                                    return
+                                }
+
+                                state = value.translation.height
+                            }
+                            .onEnded { value in
+                                guard !recorder.isRecording else {
+                                    return
+                                }
+
+                                let threshold = proxy.size.height * 0.2
+                                guard value.translation.height <= -threshold else {
+                                    return
+                                }
+
+                                showingHistory = true
+                            }
+                    )
                 }
             }
             .recordingTagToast($tagToast)
@@ -1581,6 +1641,11 @@ struct ContentView: View {
         withAnimation(.spring(response: 0.24, dampingFraction: 0.86)) {
             tagToast = RecordingTagToast(result: result)
         }
+    }
+
+    private func historySwipeProgress(viewportHeight: CGFloat) -> CGFloat {
+        let threshold = max(1, viewportHeight * 0.2)
+        return min(1, max(0, -historySwipeTranslation / threshold))
     }
 
     private var header: some View {
@@ -3211,6 +3276,8 @@ private struct RecordingHistoryView: View {
     @State private var isSelectionMode = false
     @State private var selectedRecordingIDs: Set<RecordingItem.ID> = []
     @State private var fullScreenRecording: RecordingItem?
+    @State private var showingShareSheet = false
+    @State private var shareURLs: [URL] = []
 
     var body: some View {
         ZStack {
@@ -3294,6 +3361,19 @@ private struct RecordingHistoryView: View {
                     Spacer()
 
                     Button {
+                        shareSelectedRecordings()
+                    } label: {
+                        Label(appLanguage.text(.share), systemImage: "square.and.arrow.up")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(selectedRecordingIDs.isEmpty ? .pixelInk.opacity(0.42) : .pixelPaper)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(selectedRecordingIDs.isEmpty ? Color.pixelInk.opacity(0.12) : Color.pixelInk, in: PixelCornerShape(cornerRadius: 5))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(selectedRecordingIDs.isEmpty)
+
+                    Button {
                         deleteSelectedRecordings()
                     } label: {
                         Label(appLanguage.text(.delete), systemImage: "trash.fill")
@@ -3313,6 +3393,9 @@ private struct RecordingHistoryView: View {
         }
         .fullScreenCover(item: $fullScreenRecording) { recording in
             RecordingPlaybackView(recording: recording, recorder: recorder)
+        }
+        .sheet(isPresented: $showingShareSheet) {
+            SystemShareSheet(activityItems: shareURLs.map { $0 as Any })
         }
         .onChange(of: recorder.recordings) { _, recordings in
             let existingIDs = Set(recordings.map(\.id))
@@ -3418,6 +3501,32 @@ private struct RecordingHistoryView: View {
         selectedRecordingIDs.removeAll()
         isSelectionMode = false
     }
+
+    private func shareSelectedRecordings() {
+        let selectedURLs = recorder.recordings
+            .filter { selectedRecordingIDs.contains($0.id) }
+            .map(\.url)
+
+        guard selectedURLs.isEmpty == false else {
+            return
+        }
+
+        shareURLs = selectedURLs
+        showingShareSheet = true
+    }
+}
+
+private struct SystemShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(
+            activityItems: activityItems,
+            applicationActivities: nil
+        )
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 private struct RecordingTagCloud: View {
