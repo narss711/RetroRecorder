@@ -934,10 +934,11 @@ private final class RecordingPlaybackController: NSObject, ObservableObject {
             return
         }
 
+        let session = AVAudioSession.sharedInstance()
+
+        // Let iOS resolve a connected Bluetooth output first. Routing is a
+        // best-effort concern and must not prevent the AVPlayer from loading.
         do {
-            let session = AVAudioSession.sharedInstance()
-            // Let iOS resolve a connected Bluetooth output first, then fall
-            // back to the built-in speaker when no Bluetooth route exists.
             try session.setCategory(.playback, mode: .default, options: [.allowBluetoothA2DP])
             try session.setActive(true)
             hasBluetoothOutput = containsBluetoothOutput(session.currentRoute.outputs)
@@ -948,20 +949,26 @@ private final class RecordingPlaybackController: NSObject, ObservableObject {
             if hasBluetoothOutput == false {
                 try configureAudioSession(for: .speaker)
             }
-            installRouteObserver()
-
-            let playerItem = AVPlayerItem(url: recording.url)
-            playerItem.audioTimePitchAlgorithm = .timeDomain
-
-            let nextPlayer = AVPlayer(playerItem: playerItem)
-            nextPlayer.automaticallyWaitsToMinimizeStalling = false
-            player = nextPlayer
-            duration = recording.duration
-            installEndObserver(for: playerItem)
-            loadWaveformIfNeeded()
         } catch {
-            errorMessage = error.localizedDescription
+            // Some active audio routes reject a category change temporarily.
+            // Keep playback usable and let the user change output afterwards.
+            outputMode = .speaker
+            outputOptions = [.speaker, .receiver]
+            try? session.setCategory(.playback, mode: .default)
+            try? session.setActive(true)
         }
+
+        installRouteObserver()
+
+        let playerItem = AVPlayerItem(url: recording.url)
+        playerItem.audioTimePitchAlgorithm = .timeDomain
+
+        let nextPlayer = AVPlayer(playerItem: playerItem)
+        nextPlayer.automaticallyWaitsToMinimizeStalling = false
+        player = nextPlayer
+        duration = recording.duration
+        installEndObserver(for: playerItem)
+        loadWaveformIfNeeded()
     }
 
     func setOutputMode(_ mode: PlaybackOutputMode) {
