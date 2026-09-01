@@ -60,6 +60,50 @@ struct SpeechLanguageOption: Identifiable, Hashable {
 
     static let defaultIdentifier = "zh-CN"
 
+    static func systemDefaultIdentifier(in options: [SpeechLanguageOption]) -> String {
+        guard options.isEmpty == false else {
+            return defaultIdentifier
+        }
+
+        let systemIdentifier = normalized(Locale.current.identifier)
+        if let exactMatch = options.first(where: {
+            $0.id.caseInsensitiveCompare(systemIdentifier) == .orderedSame
+        }) {
+            return exactMatch.id
+        }
+
+        let languageCode = systemIdentifier.split(separator: "-").first.map(String.init) ?? systemIdentifier
+        let preferredIdentifiers: [String]
+        if languageCode == "zh" {
+            let isTraditional = systemIdentifier.localizedCaseInsensitiveContains("hant")
+            preferredIdentifiers = isTraditional
+                ? ["zh-TW", "zh-HK", "zh-CN"]
+                : ["zh-CN", "zh-TW", "zh-HK"]
+        } else {
+            preferredIdentifiers = []
+        }
+
+        for identifier in preferredIdentifiers {
+            if let match = options.first(where: { $0.id.caseInsensitiveCompare(identifier) == .orderedSame }) {
+                return match.id
+            }
+        }
+
+        if let sameLanguageMatch = options.first(where: {
+            $0.id.split(separator: "-").first.map(String.init) == languageCode
+        }) {
+            return sameLanguageMatch.id
+        }
+
+        if let defaultMatch = options.first(where: {
+            $0.id.caseInsensitiveCompare(defaultIdentifier) == .orderedSame
+        }) {
+            return defaultMatch.id
+        }
+
+        return options[0].id
+    }
+
     static func option(for identifier: String) -> SpeechLanguageOption {
         let normalizedIdentifier = normalized(identifier)
         let locale = Locale(identifier: normalizedIdentifier)

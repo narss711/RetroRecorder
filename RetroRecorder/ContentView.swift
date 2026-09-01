@@ -1853,6 +1853,9 @@ private struct RecorderLCDPanel: View {
             LiveTranscriptPanel(
                 text: liveText,
                 isActive: recorder.isRecording && !recorder.isPaused,
+                selectedLanguageIdentifier: recorder.liveRecognitionLanguageIdentifier,
+                languageOptions: recorder.localeChoices,
+                onLanguageChange: recorder.setLiveRecognitionLanguage,
                 canAddTag: recorder.isRecording,
                 currentTagTimeText: RecordingItem.format(recorder.elapsed),
                 hasCurrentTag: recorder.hasTagAtCurrentRecordingTime,
@@ -1907,6 +1910,9 @@ private struct LiveTranscriptPanel: View {
 
     let text: String
     let isActive: Bool
+    let selectedLanguageIdentifier: String
+    let languageOptions: [SpeechLanguageOption]
+    let onLanguageChange: (String) -> Void
     var canAddTag = false
     var currentTagTimeText = "00:00"
     var hasCurrentTag = false
@@ -1916,6 +1922,11 @@ private struct LiveTranscriptPanel: View {
         text.isEmpty ? " " : text
     }
 
+    private var selectedLanguageOption: SpeechLanguageOption {
+        languageOptions.first(where: { $0.id == selectedLanguageIdentifier })
+            ?? SpeechLanguageOption.option(for: selectedLanguageIdentifier)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
@@ -1923,6 +1934,8 @@ private struct LiveTranscriptPanel: View {
                     .retroFont(size: 11, weight: .black, design: .monospaced)
 
                 Spacer()
+
+                languageMenu
 
                 if isActive {
                     PixelBlinkDot()
@@ -1954,6 +1967,42 @@ private struct LiveTranscriptPanel: View {
                 onAddTag: onAddTag
             )
         }
+    }
+
+    private var languageMenu: some View {
+        Menu {
+            ForEach(languageOptions) { option in
+                Button {
+                    onLanguageChange(option.id)
+                } label: {
+                    HStack {
+                        Text(option.title)
+                        Spacer()
+                        if option.id == selectedLanguageIdentifier {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: "globe")
+                    .font(.system(size: 9, weight: .bold))
+                Text(selectedLanguageOption.nativeName)
+                    .retroFont(size: 8, weight: .black, design: .monospaced)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.68)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 7, weight: .black))
+            }
+            .foregroundStyle(.pixelInk.opacity(0.78))
+            .frame(maxWidth: 112, minHeight: 28)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(languageOptions.isEmpty)
+        .accessibilityLabel(appLanguage.text(.recognitionLanguage))
+        .accessibilityValue(selectedLanguageOption.title)
     }
 
     private var liveTextWindow: some View {

@@ -414,6 +414,11 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
     @Published var copiedRecordingID: RecordingItem.ID?
     @Published var reviewRecording: RecordingItem?
     @Published var localeChoices = SpeechLanguageOption.supportedOptions()
+    @Published var liveRecognitionLanguageIdentifier: String {
+        didSet {
+            UserDefaults.standard.set(liveRecognitionLanguageIdentifier, forKey: Self.liveRecognitionLanguageDefaultsKey)
+        }
+    }
     @Published var lastInputRefreshAt: Date?
     @Published var errorMessage: String?
     @Published var liveTranscript = ""
@@ -456,6 +461,7 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
     private static let recordingFileFormatDefaultsKey = "recordingFileFormat"
     private static let recordingSampleRateDefaultsKey = "recordingSampleRate"
     private static let recordingBitDepthDefaultsKey = "recordingBitDepth"
+    private static let liveRecognitionLanguageDefaultsKey = "liveRecognitionLanguage"
     private let inputManager = AudioSessionInputManager()
     private let locationProvider = RecordingLocationProvider()
     private let transcriber = SpeechTranscriber()
@@ -509,6 +515,14 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
 
         let storedBitDepth = UserDefaults.standard.integer(forKey: Self.recordingBitDepthDefaultsKey)
         recordingBitDepth = RecordingBitDepth(rawValue: storedBitDepth) ?? .int24
+
+        let availableLanguages = SpeechLanguageOption.supportedOptions()
+        let storedLanguage = UserDefaults.standard.string(forKey: Self.liveRecognitionLanguageDefaultsKey)
+            .map(SpeechLanguageOption.normalized)
+        let preferredLanguage = storedLanguage.flatMap { stored in
+            availableLanguages.first(where: { $0.id.caseInsensitiveCompare(stored) == .orderedSame })?.id
+        } ?? SpeechLanguageOption.systemDefaultIdentifier(in: availableLanguages)
+        liveRecognitionLanguageIdentifier = preferredLanguage
 
         super.init()
         cloudStoreObserver = NotificationCenter.default.addObserver(
@@ -686,6 +700,38 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         SpeechLanguageOption.option(for: localeIdentifier(for: recording)).displayName
     }
 
+    func setLiveRecognitionLanguage(_ identifier: String) {
+        let normalizedIdentifier = SpeechLanguageOption.normalized(identifier)
+
+        guard normalizedIdentifier.isEmpty == false else {
+            return
+        }
+
+        if localeChoices.contains(where: { $0.id == normalizedIdentifier }) == false {
+            localeChoices.insert(SpeechLanguageOption.option(for: normalizedIdentifier), at: 0)
+        }
+
+        guard normalizedIdentifier != liveRecognitionLanguageIdentifier else {
+            return
+        }
+
+        liveRecognitionLanguageIdentifier = normalizedIdentifier
+
+        guard isRecording, let recordingURL = activeRecordingURL else {
+            return
+        }
+
+        let previousTranscript = liveTranscript
+        try? RecordingStore.saveLanguageIdentifier(normalizedIdentifier, for: recordingURL)
+
+        Task { @MainActor [weak self] in
+            await self?.startLiveRecognition(
+                for: recordingURL,
+                initialTranscript: previousTranscript
+            )
+        }
+    }
+
     func setLocaleIdentifier(_ identifier: String, for recording: RecordingItem) {
         let normalizedIdentifier = SpeechLanguageOption.normalized(identifier)
 
@@ -841,7 +887,7 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
             )
             let selectedInput = inputs.first { $0.id == selectedInputID } ?? inputs.first
             let recordingMetadata = RecordingMetadata(
-                languageIdentifier: nil,
+                languageIdentifier: liveRecognitionLanguageIdentifier,
                 title: nil,
                 tagTimes: nil,
                 recordIdentifier: UUID().uuidString,
@@ -1148,10 +1194,15 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         }
     }
 
-    private func startLiveRecognition(for recordingURL: URL) async {
+    private func startLiveRecognition(
+        for recordingURL: URL,
+        initialTranscript: String = ""
+    ) async {
+        let languageIdentifier = liveRecognitionLanguageIdentifier
+
         do {
             try await liveSpeechRecognizer.start(
-                localeIdentifier: SpeechLanguageOption.defaultIdentifier,
+                localeIdentifier: languageIdentifier,
                 onResult: { [weak self] transcript in
                     Task { @MainActor in
                         guard let self,
@@ -1160,7 +1211,11 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
                             return
                         }
 
-                        self.liveTranscript = transcript
+                        self.liveTranscript = self.mergeLiveTranscript(
+                            initialTranscript,
+                            with: transcript,
+                            languageIdentifier: languageIdentifier
+                        )
                     }
                 },
                 onError: { [weak self] error in
@@ -1183,6 +1238,23 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
                 liveTranscript = error.localizedDescription
             }
         }
+    }
+
+    private func mergeLiveTranscript(
+        _ prefix: String,
+        with next: String,
+        languageIdentifier: String
+    ) -> String {
+        let prefix = prefix.trimmingCharacters(in: .whitespacesAndNewlines)
+        let next = next.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard prefix.isEmpty == false else { return next }
+        guard next.isEmpty == false else { return prefix }
+        guard prefix != next else { return prefix }
+
+        let languageCode = languageIdentifier.split(separator: "-").first.map(String.init) ?? languageIdentifier
+        let usesWordSeparators = ["en", "es", "ar", "pt", "ru", "de", "fr"].contains(languageCode)
+        return usesWordSeparators ? "\(prefix) \(next)" : "\(prefix)\(next)"
     }
 
     private func refreshLocationMetadata(for recordingURL: URL, recordingDate: Date) async {
@@ -1385,6 +1457,7 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
     private func finishRecording(successfully flag: Bool) {
         let finishedRecordingURL = activeRecordingURL
         let capturedTranscript = liveTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+        let capturedLanguageIdentifier = liveRecognitionLanguageIdentifier
         let capturedTagTimes = activeRecordingTagTimes
         let finalElapsed = elapsed
 
@@ -1417,7 +1490,11 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         recordings = RecordingStore.loadRecordings()
 
         if flag, let finishedRecordingURL {
-            scheduleReviewPresentation(for: finishedRecordingURL, transcript: capturedTranscript)
+            scheduleReviewPresentation(
+                for: finishedRecordingURL,
+                transcript: capturedTranscript,
+                languageIdentifier: capturedLanguageIdentifier
+            )
         } else if !flag {
             errorMessage = "录音没有成功保存。"
         }
@@ -1425,7 +1502,11 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         refreshInputs(activateSession: true)
     }
 
-    private func scheduleReviewPresentation(for url: URL, transcript: String) {
+    private func scheduleReviewPresentation(
+        for url: URL,
+        transcript: String,
+        languageIdentifier: String
+    ) {
         let standardizedPath = url.standardizedFileURL.path
 
         Task { @MainActor in
@@ -1434,7 +1515,7 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
             if transcript.isEmpty == false {
                 try? RecordingStore.saveTranscript(
                     transcript,
-                    languageIdentifier: SpeechLanguageOption.defaultIdentifier,
+                    languageIdentifier: languageIdentifier,
                     for: url
                 )
             }
