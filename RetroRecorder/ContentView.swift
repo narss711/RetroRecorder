@@ -1385,7 +1385,6 @@ private struct HistorySwipeHintView: View {
         .frame(maxWidth: .infinity)
         .frame(height: 70)
         .scaleEffect(0.96 + progress * 0.04)
-        .animation(.easeOut(duration: 0.12), value: progress)
         .accessibilityLabel(appLanguage.text(.historySwipeHint))
     }
 }
@@ -1393,9 +1392,11 @@ private struct HistorySwipeHintView: View {
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject private var recorder = AudioRecorderViewModel()
     @State private var showingSettings = false
     @State private var historyProgress: CGFloat = 0
+    @State private var isHistoryContentLoaded = false
     @State private var tagToast: RecordingTagToast?
     @GestureState private var historySwipeTranslation: CGFloat = 0
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
@@ -1455,17 +1456,29 @@ struct ContentView: View {
                     )
 
                     ZStack {
-                        RecordingHistoryView(
-                            recorder: recorder,
-                            onClose: closeHistory
-                        )
-                        .environment(\.appLanguage, appLanguage)
-                        .environment(\.layoutDirection, appLanguage.layoutDirection)
-                        .environment(\.interfaceRetroFont, interfaceFont)
-                        .environment(\.font, interfaceFont.font(size: 15, weight: .regular))
-                        .opacity(currentHistoryProgress)
-                        .offset(y: proxy.size.height * (1 - currentHistoryProgress))
-                        .allowsHitTesting(currentHistoryProgress > 0.98)
+                        if currentHistoryProgress > 0.001 || historyProgress > 0.001 {
+                            Group {
+                                if isHistoryContentLoaded {
+                                    RecordingHistoryView(
+                                        recorder: recorder,
+                                        onClose: closeHistory
+                                    )
+                                } else {
+                                    HistoryTransitionPreview(recordings: recorder.recordings)
+                                }
+                            }
+                            .environment(\.appLanguage, appLanguage)
+                            .environment(\.layoutDirection, appLanguage.layoutDirection)
+                            .environment(\.interfaceRetroFont, interfaceFont)
+                            .environment(\.font, interfaceFont.font(size: 15, weight: .regular))
+                            .opacity(currentHistoryProgress)
+                            .offset(
+                                y: reduceMotion
+                                    ? 0
+                                    : proxy.size.height * (1 - currentHistoryProgress)
+                            )
+                            .allowsHitTesting(isHistoryContentLoaded && currentHistoryProgress > 0.98)
+                        }
 
                         recordingHome(
                             isCompactHeight: isCompactHeight,
@@ -1473,12 +1486,18 @@ struct ContentView: View {
                             waveVisualHeight: waveVisualHeight,
                             historyProgress: currentHistoryProgress
                         )
-                        .offset(y: -proxy.size.height * currentHistoryProgress)
+                        .offset(
+                            y: reduceMotion
+                                ? 0
+                                : -proxy.size.height * currentHistoryProgress
+                        )
                         .allowsHitTesting(currentHistoryProgress < 0.98)
+                        .simultaneousGesture(
+                            historyTransitionGesture(viewportHeight: proxy.size.height)
+                        )
                     }
                     .clipped()
                     .contentShape(Rectangle())
-                    .gesture(historyTransitionGesture(viewportHeight: proxy.size.height))
                 }
             }
             .recordingTagToast($tagToast)
@@ -1585,15 +1604,27 @@ struct ContentView: View {
     }
 
     private func openHistory() {
-        withAnimation(.interactiveSpring(response: 0.34, dampingFraction: 0.88, blendDuration: 0.12)) {
+        isHistoryContentLoaded = false
+
+        withAnimation(historySpring) {
             historyProgress = 1
         }
+
+        loadHistoryContentAfterTransition()
     }
 
     private func closeHistory() {
-        withAnimation(.interactiveSpring(response: 0.34, dampingFraction: 0.88, blendDuration: 0.12)) {
+        withAnimation(historySpring) {
             historyProgress = 0
         }
+
+        unloadHistoryContentAfterTransition()
+    }
+
+    private var historySpring: Animation {
+        reduceMotion
+            ? .easeOut(duration: 0.16)
+            : .interactiveSpring(response: 0.3, dampingFraction: 0.86, blendDuration: 0.08)
     }
 
     private func interactiveHistoryProgress(viewportHeight: CGFloat) -> CGFloat {
@@ -1617,19 +1648,48 @@ struct ContentView: View {
                 }
 
                 let height = max(1, viewportHeight)
+                let releasedProgress = min(
+                    1,
+                    max(0, historyProgress - value.translation.height / height)
+                )
                 let projectedProgress = historyProgress - value.predictedEndTranslation.height / height
-                let targetProgress: CGFloat
+                let targetProgress: CGFloat = projectedProgress >= 0.2 ? 1 : 0
 
-                if projectedProgress >= 0.5 {
-                    targetProgress = 1
-                } else {
-                    targetProgress = 0
-                }
+                historyProgress = releasedProgress
 
-                withAnimation(.interactiveSpring(response: 0.34, dampingFraction: 0.88, blendDuration: 0.12)) {
+                withAnimation(historySpring) {
                     historyProgress = targetProgress
                 }
+
+                if targetProgress == 1 {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    loadHistoryContentAfterTransition()
+                } else {
+                    isHistoryContentLoaded = false
+                }
             }
+    }
+
+    private func loadHistoryContentAfterTransition() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(reduceMotion ? 170 : 320))
+            guard historyProgress > 0.99 else {
+                return
+            }
+
+            isHistoryContentLoaded = true
+        }
+    }
+
+    private func unloadHistoryContentAfterTransition() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(reduceMotion ? 170 : 320))
+            guard historyProgress < 0.01 else {
+                return
+            }
+
+            isHistoryContentLoaded = false
+        }
     }
 
     @ViewBuilder
@@ -1673,6 +1733,7 @@ struct ContentView: View {
                     recorder: recorder,
                     visualHeight: waveVisualHeight
                 )
+                .equatable()
 
                 GameBoyBottomControlsView(
                     recorder: recorder,
@@ -1896,11 +1957,15 @@ private struct PixelDropdownPanel<Content: View>: View {
     }
 }
 
-private struct RecorderLCDPanel: View {
+private struct RecorderLCDPanel: View, Equatable {
     @Environment(\.appLanguage) private var appLanguage
     @ObservedObject var recorder: AudioRecorderViewModel
 
     let visualHeight: CGFloat
+
+    static func == (lhs: RecorderLCDPanel, rhs: RecorderLCDPanel) -> Bool {
+        lhs.recorder === rhs.recorder && lhs.visualHeight == rhs.visualHeight
+    }
 
     private var liveText: String {
         guard recorder.isRecording else {
@@ -1980,6 +2045,116 @@ private struct RecorderLCDPanel: View {
             Rectangle()
                 .stroke(.pixelInk, lineWidth: 3)
         }
+    }
+}
+
+private struct HistoryTransitionPreview: View {
+    @Environment(\.appLanguage) private var appLanguage
+
+    let recordings: [RecordingItem]
+
+    var body: some View {
+        ZStack {
+            AdaptiveAppBackground()
+
+            GeometryReader { proxy in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "arrow.left")
+                            .font(.system(size: 18, weight: .black))
+                            .frame(width: 38, height: 38)
+
+                        Text("HISTORY")
+                            .retroFont(size: 22, weight: .black, design: .monospaced)
+                            .frame(maxWidth: .infinity)
+
+                        Text(appLanguage.text(.select).uppercased())
+                            .retroFont(size: 12, weight: .black, design: .monospaced)
+                            .frame(width: 68, height: 38)
+                    }
+                    .foregroundStyle(.pixelInk)
+                    .padding(.horizontal, 8)
+                    .frame(height: 46)
+                    .background(Color.pixelPaper)
+                    .overlay {
+                        Rectangle()
+                            .stroke(.pixelInk, lineWidth: 2)
+                    }
+
+                    Group {
+                        if recordings.isEmpty {
+                            Text(appLanguage.text(.noRecordings).uppercased())
+                                .retroFont(size: 14, weight: .black, design: .monospaced)
+                                .foregroundStyle(.pixelInk.opacity(0.62))
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else {
+                            VStack(spacing: 0) {
+                                ForEach(Array(recordings.prefix(6))) { recording in
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "play.fill")
+                                            .font(.system(size: 13, weight: .black))
+                                            .frame(width: 34, height: 44)
+
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(recording.title)
+                                                .retroFont(size: 15, weight: .black, design: .monospaced)
+                                                .lineLimit(1)
+
+                                            Text("\(recording.durationText)  \(recording.subtitle)")
+                                                .retroFont(size: 10, weight: .bold, design: .monospaced)
+                                                .foregroundStyle(.pixelInk.opacity(0.52))
+                                                .lineLimit(1)
+                                        }
+
+                                        Spacer(minLength: 6)
+
+                                        Image(systemName: "chevron.down")
+                                            .font(.system(size: 13, weight: .black))
+                                            .frame(width: 34, height: 44)
+                                    }
+                                    .foregroundStyle(.pixelInk)
+                                    .padding(.horizontal, 10)
+                                    .frame(height: 66)
+                                    .overlay(alignment: .bottom) {
+                                        Rectangle()
+                                            .fill(Color.pixelInk.opacity(0.58))
+                                            .frame(height: 2)
+                                    }
+                                }
+
+                                Spacer(minLength: 0)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.pixelPaper)
+                    .overlay {
+                        Rectangle()
+                            .stroke(.pixelInk, lineWidth: 3)
+                    }
+
+                    Text("\(recordings.count) RECORDINGS")
+                        .retroFont(size: 13, weight: .black, design: .monospaced)
+                        .foregroundStyle(.pixelInk.opacity(0.64))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 34)
+                }
+                .padding(9)
+                .frame(
+                    width: max(0, proxy.size.width - 14),
+                    height: max(0, proxy.size.height - 12)
+                )
+                .background(Color.pixelPanel)
+                .overlay {
+                    PixelCornerShape(cornerRadius: 8)
+                        .stroke(.pixelInk, lineWidth: 3)
+                }
+                .padding(.horizontal, 7)
+                .padding(.vertical, 6)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 
@@ -2857,6 +3032,8 @@ private struct RecordingRowView: View {
                         Image(systemName: isSelected ? "checkmark.square.fill" : "square")
                             .font(.title3.weight(.black))
                             .foregroundStyle(isSelected ? .pixelInk : .pixelInk.opacity(0.42))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 } else if !isExpanded {
@@ -3477,44 +3654,45 @@ private struct RecordingHistoryView: View {
     }
 
     private var selectionToolbar: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
             Text(appLanguage.format(.selectedCountFormat, selectedRecordingIDs.count))
-                .font(.caption.weight(.bold))
+                .retroFont(size: 12, weight: .black, design: .monospaced)
                 .foregroundStyle(.pixelInk.opacity(0.72))
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 4)
 
             Button {
                 shareSelectedRecordings()
             } label: {
-                Label(appLanguage.text(.share), systemImage: "square.and.arrow.up")
-                    .font(.subheadline.weight(.bold))
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 18, weight: .black))
                     .foregroundStyle(selectedRecordingIDs.isEmpty ? .pixelInk.opacity(0.42) : .pixelPaper)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 9)
+                    .frame(width: 48, height: 44)
                     .background(selectedRecordingIDs.isEmpty ? Color.pixelInk.opacity(0.12) : Color.pixelInk, in: PixelCornerShape(cornerRadius: 5))
             }
             .buttonStyle(.plain)
             .disabled(selectedRecordingIDs.isEmpty)
+            .accessibilityLabel(appLanguage.text(.share))
 
             Button {
                 deleteSelectedRecordings()
             } label: {
-                Label(appLanguage.text(.delete), systemImage: "trash.fill")
-                    .font(.subheadline.weight(.bold))
+                Image(systemName: "trash.fill")
+                    .font(.system(size: 18, weight: .black))
                     .foregroundStyle(selectedRecordingIDs.isEmpty ? .pixelInk.opacity(0.42) : .pixelPaper)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 9)
+                    .frame(width: 48, height: 44)
                     .background(selectedRecordingIDs.isEmpty ? Color.pixelInk.opacity(0.12) : Color.pixelInk, in: PixelCornerShape(cornerRadius: 5))
             }
             .buttonStyle(.plain)
             .disabled(selectedRecordingIDs.isEmpty)
+            .accessibilityLabel(appLanguage.text(.delete))
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
         .frame(maxWidth: .infinity)
+        .frame(height: 54)
         .background(Color.pixelPaper)
         .overlay {
             Rectangle()
