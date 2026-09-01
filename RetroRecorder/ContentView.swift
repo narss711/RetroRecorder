@@ -178,6 +178,15 @@ enum InterfaceRetroFont: String, CaseIterable, Identifiable {
     case pressStart2P
     case silkscreen
     case specialElite
+    case pixelifySans
+    case fusionPixelSimplified
+    case fusionPixelTraditional
+    case fusionPixelJapanese
+    case dotGothic16
+    case changa
+    case notoKufiArabic
+    case russoOne
+    case jura
 
     static let storageKey = "interfaceRetroFont"
 
@@ -185,6 +194,27 @@ enum InterfaceRetroFont: String, CaseIterable, Identifiable {
 
     static func value(for rawValue: String) -> InterfaceRetroFont {
         InterfaceRetroFont(rawValue: rawValue) ?? .system
+    }
+
+    static func availableOptions(for language: AppLanguage) -> [InterfaceRetroFont] {
+        switch language.resolvedLanguage {
+        case .simplifiedChinese:
+            return [.system, .fusionPixelSimplified, .dotGothic16]
+        case .traditionalChinese:
+            return [.system, .fusionPixelTraditional, .dotGothic16]
+        case .japanese:
+            return [.system, .fusionPixelJapanese, .dotGothic16]
+        case .arabic:
+            return [.system, .changa, .notoKufiArabic]
+        case .russian:
+            return [.system, .russoOne, .jura]
+        case .system, .english, .spanish, .portuguese, .german, .french:
+            return [.system, .pixelifySans, .vt323, .pressStart2P, .silkscreen, .specialElite]
+        }
+    }
+
+    func supports(_ language: AppLanguage) -> Bool {
+        Self.availableOptions(for: language).contains(self)
     }
 
     var title: String {
@@ -199,6 +229,24 @@ enum InterfaceRetroFont: String, CaseIterable, Identifiable {
             return "Silkscreen"
         case .specialElite:
             return "Special Elite"
+        case .pixelifySans:
+            return "Pixelify Sans"
+        case .fusionPixelSimplified:
+            return "Fusion Pixel CN"
+        case .fusionPixelTraditional:
+            return "Fusion Pixel TC"
+        case .fusionPixelJapanese:
+            return "Fusion Pixel JP"
+        case .dotGothic16:
+            return "DotGothic16"
+        case .changa:
+            return "Changa"
+        case .notoKufiArabic:
+            return "Noto Kufi Arabic"
+        case .russoOne:
+            return "Russo One"
+        case .jura:
+            return "Jura"
         }
     }
 
@@ -214,21 +262,50 @@ enum InterfaceRetroFont: String, CaseIterable, Identifiable {
             return "Early web pixel"
         case .specialElite:
             return "Vintage typewriter"
+        case .pixelifySans:
+            return "Modern pixel grid"
+        case .fusionPixelSimplified, .fusionPixelTraditional, .fusionPixelJapanese:
+            return "CJK pixel display"
+        case .dotGothic16:
+            return "16-dot terminal"
+        case .changa:
+            return "Arabic display"
+        case .notoKufiArabic:
+            return "Arabic Kufi"
+        case .russoOne:
+            return "Cyrillic display"
+        case .jura:
+            return "Retro sci-fi"
         }
     }
 
-    var sampleText: String {
-        switch self {
-        case .system:
-            return "RETRO REC"
-        case .vt323:
-            return "TAPE READY"
-        case .pressStart2P:
-            return "PRESS REC"
-        case .silkscreen:
-            return "INPUT WAVE"
-        case .specialElite:
-            return "New Recording"
+    func sampleText(for language: AppLanguage) -> String {
+        switch language.resolvedLanguage {
+        case .simplifiedChinese:
+            return "复古录音"
+        case .traditionalChinese:
+            return "復古錄音"
+        case .japanese:
+            return "レトロ録音"
+        case .arabic:
+            return "تسجيل صوتي"
+        case .russian:
+            return "РЕТРО REC"
+        case .system, .english, .spanish, .portuguese, .german, .french:
+            switch self {
+            case .system:
+                return "RETRO REC"
+            case .vt323:
+                return "TAPE READY"
+            case .pressStart2P:
+                return "PRESS REC"
+            case .silkscreen:
+                return "INPUT WAVE"
+            case .specialElite:
+                return "New Recording"
+            default:
+                return "RETRO REC"
+            }
         }
     }
 
@@ -244,6 +321,24 @@ enum InterfaceRetroFont: String, CaseIterable, Identifiable {
             return "Silkscreen-Regular"
         case .specialElite:
             return "SpecialElite-Regular"
+        case .pixelifySans:
+            return "PixelifySans-Regular"
+        case .fusionPixelSimplified:
+            return "Fusion-Pixel-8px-Prop-zh_hans-Regular"
+        case .fusionPixelTraditional:
+            return "Fusion-Pixel-8px-Prop-zh_hant-Regular"
+        case .fusionPixelJapanese:
+            return "Fusion-Pixel-8px-Prop-ja-Regular"
+        case .dotGothic16:
+            return "DotGothic16-Regular"
+        case .changa:
+            return "Changa-Regular"
+        case .notoKufiArabic:
+            return "NotoKufiArabic-Regular"
+        case .russoOne:
+            return "RussoOne-Regular"
+        case .jura:
+            return "Jura-Regular"
         }
     }
 
@@ -267,6 +362,20 @@ enum InterfaceRetroFont: String, CaseIterable, Identifiable {
             return size * 0.92
         case .specialElite:
             return size * 1.05
+        case .pixelifySans:
+            return size
+        case .fusionPixelSimplified, .fusionPixelTraditional, .fusionPixelJapanese:
+            return size * 0.98
+        case .dotGothic16:
+            return size * 0.94
+        case .changa:
+            return size * 0.96
+        case .notoKufiArabic:
+            return size * 0.92
+        case .russoOne:
+            return size * 0.96
+        case .jura:
+            return size
         }
     }
 }
@@ -1361,11 +1470,8 @@ struct ContentView: View {
     }
 
     private var interfaceFont: InterfaceRetroFont {
-        guard appLanguage.resolvedLanguage == .english else {
-            return .system
-        }
-
-        return InterfaceRetroFont.value(for: interfaceFontRaw)
+        let selectedFont = InterfaceRetroFont.value(for: interfaceFontRaw)
+        return selectedFont.supports(appLanguage) ? selectedFont : .system
     }
 
     private var interfacePalette: InterfaceThemePalette {
@@ -4032,11 +4138,8 @@ private struct SettingsView: View {
     }
 
     private var interfaceFont: InterfaceRetroFont {
-        guard appLanguage.resolvedLanguage == .english else {
-            return .system
-        }
-
-        return InterfaceRetroFont.value(for: interfaceFontRaw)
+        let selectedFont = InterfaceRetroFont.value(for: interfaceFontRaw)
+        return selectedFont.supports(appLanguage) ? selectedFont : .system
     }
 
     var body: some View {
@@ -4054,9 +4157,7 @@ private struct SettingsView: View {
                                 WaveformFilterSettingsView(isASCIIFilterEnabled: $isASCIIFilterEnabled)
                                 AppLanguagePickerView(selectedRawValue: $appLanguageRaw)
 
-                                if appLanguage.resolvedLanguage == .english {
-                                    InterfaceRetroFontPickerView(selectedRawValue: $interfaceFontRaw)
-                                }
+                                InterfaceRetroFontPickerView(selectedRawValue: $interfaceFontRaw)
 
                                 TranscriptionModelPickerView(selectedEngine: $recorder.transcriptionEngine)
                                 AudioRecordingSettingsPickerView(
@@ -4303,8 +4404,13 @@ private struct InterfaceRetroFontPickerView: View {
 
     @Binding var selectedRawValue: String
 
+    private var options: [InterfaceRetroFont] {
+        InterfaceRetroFont.availableOptions(for: appLanguage)
+    }
+
     private var selectedFont: InterfaceRetroFont {
-        InterfaceRetroFont.value(for: selectedRawValue)
+        let selectedFont = InterfaceRetroFont.value(for: selectedRawValue)
+        return options.contains(selectedFont) ? selectedFont : .system
     }
 
     var body: some View {
@@ -4312,12 +4418,13 @@ private struct InterfaceRetroFontPickerView: View {
             sectionHeader(appLanguage.text(.interfaceFont))
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 156), spacing: 10)], spacing: 10) {
-                ForEach(InterfaceRetroFont.allCases) { font in
+                ForEach(options) { font in
                     Button {
                         selectedRawValue = font.rawValue
                     } label: {
                         InterfaceRetroFontRow(
                             option: font,
+                            displayLanguage: appLanguage,
                             isSelected: selectedFont == font
                         )
                     }
@@ -4330,6 +4437,7 @@ private struct InterfaceRetroFontPickerView: View {
 
 private struct InterfaceRetroFontRow: View {
     let option: InterfaceRetroFont
+    let displayLanguage: AppLanguage
     let isSelected: Bool
 
     var body: some View {
@@ -4348,7 +4456,7 @@ private struct InterfaceRetroFontRow: View {
                     .foregroundStyle(.pixelInk.opacity(isSelected ? 1 : 0.3))
             }
 
-            Text(option.sampleText)
+            Text(option.sampleText(for: displayLanguage))
                 .font(option.font(size: 19, weight: .black, design: .monospaced))
                 .foregroundStyle(.pixelInk.opacity(0.88))
                 .lineLimit(1)

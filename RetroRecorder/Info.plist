@@ -49,6 +49,15 @@
 		<string>VT323-Regular.ttf</string>
 		<string>Silkscreen-Regular.ttf</string>
 		<string>SpecialElite-Regular.ttf</string>
+		<string>PixelifySans.ttf</string>
+		<string>FusionPixel8px-ZHHans.ttf</string>
+		<string>FusionPixel8px-ZHHant.ttf</string>
+		<string>FusionPixel8px-JA.ttf</string>
+		<string>DotGothic16-Regular.ttf</string>
+		<string>Changa.ttf</string>
+		<string>NotoKufiArabic.ttf</string>
+		<string>RussoOne-Regular.ttf</string>
+		<string>Jura.ttf</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>

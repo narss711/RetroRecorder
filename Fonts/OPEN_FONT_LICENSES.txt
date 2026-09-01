@@ -1,7 +1,7 @@
 RetroRecorder bundled open fonts
 
-The following font files are bundled for the English-only interface font
-selector.
+The interface font selector displays only fonts that support the current app
+language's writing system.
 
 Press Start 2P
 - File: PressStart2P-Regular.ttf
@@ -26,3 +26,46 @@ Special Elite
 - Source: https://github.com/google/fonts/tree/main/apache/specialelite
 - License: Apache License 2.0
 - Copyright: Copyright Astigmatic.
+
+Pixelify Sans
+- File: PixelifySans.ttf
+- Source: https://github.com/google/fonts/tree/main/ofl/pixelifysans
+- License: SIL Open Font License 1.1
+- Copyright: Copyright 2022 The Pixelify Sans Project Authors.
+
+Fusion Pixel Font
+- Files: FusionPixel8px-ZHHans.ttf, FusionPixel8px-ZHHant.ttf,
+  FusionPixel8px-JA.ttf
+- Source: https://github.com/TakWolf/fusion-pixel-font
+- License: SIL Open Font License 1.1
+- Copyright: Copyright 2022-2026 The Fusion Pixel Font Project Authors.
+
+DotGothic16
+- File: DotGothic16-Regular.ttf
+- Source: https://github.com/fontworks-fonts/DotGothic16
+- License: SIL Open Font License 1.1
+- Copyright: Copyright 2020 The DotGothic16 Project Authors.
+
+Changa
+- File: Changa.ttf
+- Source: https://github.com/googlefonts/changa-vf
+- License: SIL Open Font License 1.1
+- Copyright: Copyright 2017 The Changa Project Authors.
+
+Noto Kufi Arabic
+- File: NotoKufiArabic.ttf
+- Source: https://github.com/google/fonts/tree/main/ofl/notokufiarabic
+- License: SIL Open Font License 1.1
+- Copyright: Copyright 2020 The Noto Project Authors.
+
+Russo One
+- File: RussoOne-Regular.ttf
+- Source: https://github.com/google/fonts/tree/main/ofl/russoone
+- License: SIL Open Font License 1.1
+- Copyright: Copyright 2012 The Russo One Project Authors.
+
+Jura
+- File: Jura.ttf
+- Source: https://github.com/ossobuffo/jura
+- License: SIL Open Font License 1.1
+- Copyright: Copyright 2016 The Jura Project Authors.

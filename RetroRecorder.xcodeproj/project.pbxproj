@@ -52,6 +52,15 @@
 		000000000000000000000915 /* OPEN_FONT_LICENSES.txt in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000905 /* OPEN_FONT_LICENSES.txt */; };
 		000000000000000000000916 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000906 /* Assets.xcassets */; };
 		000000000000000000000917 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000001100 /* InfoPlist.strings */; };
+		000000000000000000000931 /* PixelifySans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000921 /* PixelifySans.ttf */; };
+		000000000000000000000932 /* FusionPixel8px-ZHHans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000922 /* FusionPixel8px-ZHHans.ttf */; };
+		000000000000000000000933 /* FusionPixel8px-ZHHant.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000923 /* FusionPixel8px-ZHHant.ttf */; };
+		000000000000000000000934 /* FusionPixel8px-JA.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000924 /* FusionPixel8px-JA.ttf */; };
+		000000000000000000000935 /* DotGothic16-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000925 /* DotGothic16-Regular.ttf */; };
+		000000000000000000000936 /* Changa.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000926 /* Changa.ttf */; };
+		000000000000000000000937 /* NotoKufiArabic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000927 /* NotoKufiArabic.ttf */; };
+		000000000000000000000938 /* RussoOne-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000928 /* RussoOne-Regular.ttf */; };
+		000000000000000000000939 /* Jura.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000929 /* Jura.ttf */; };
 		B5D2D516C990E03AAE794451 /* Pods_RetroRecorder.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B30EBBA20EE02534DA179B17 /* Pods_RetroRecorder.framework */; };
 /* End PBXBuildFile section */
 
@@ -141,6 +150,15 @@
 		000000000000000000000904 /* SpecialElite-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SpecialElite-Regular.ttf"; sourceTree = "<group>"; };
 		000000000000000000000905 /* OPEN_FONT_LICENSES.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OPEN_FONT_LICENSES.txt; sourceTree = "<group>"; };
 		000000000000000000000906 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		000000000000000000000921 /* PixelifySans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = PixelifySans.ttf; sourceTree = "<group>"; };
+		000000000000000000000922 /* FusionPixel8px-ZHHans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FusionPixel8px-ZHHans.ttf"; sourceTree = "<group>"; };
+		000000000000000000000923 /* FusionPixel8px-ZHHant.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FusionPixel8px-ZHHant.ttf"; sourceTree = "<group>"; };
+		000000000000000000000924 /* FusionPixel8px-JA.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FusionPixel8px-JA.ttf"; sourceTree = "<group>"; };
+		000000000000000000000925 /* DotGothic16-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "DotGothic16-Regular.ttf"; sourceTree = "<group>"; };
+		000000000000000000000926 /* Changa.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Changa.ttf; sourceTree = "<group>"; };
+		000000000000000000000927 /* NotoKufiArabic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = NotoKufiArabic.ttf; sourceTree = "<group>"; };
+		000000000000000000000928 /* RussoOne-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "RussoOne-Regular.ttf"; sourceTree = "<group>"; };
+		000000000000000000000929 /* Jura.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Jura.ttf; sourceTree = "<group>"; };
 		000000000000000000001001 /* InfoPlist.strings (English) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		000000000000000000001002 /* InfoPlist.strings (Simplified Chinese) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		000000000000000000001003 /* InfoPlist.strings (Traditional Chinese) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
@@ -311,6 +329,15 @@
 				000000000000000000000903 /* Silkscreen-Regular.ttf */,
 				000000000000000000000904 /* SpecialElite-Regular.ttf */,
 				000000000000000000000905 /* OPEN_FONT_LICENSES.txt */,
+				000000000000000000000921 /* PixelifySans.ttf */,
+				000000000000000000000922 /* FusionPixel8px-ZHHans.ttf */,
+				000000000000000000000923 /* FusionPixel8px-ZHHant.ttf */,
+				000000000000000000000924 /* FusionPixel8px-JA.ttf */,
+				000000000000000000000925 /* DotGothic16-Regular.ttf */,
+				000000000000000000000926 /* Changa.ttf */,
+				000000000000000000000927 /* NotoKufiArabic.ttf */,
+				000000000000000000000928 /* RussoOne-Regular.ttf */,
+				000000000000000000000929 /* Jura.ttf */,
 			);
 			path = Fonts;
 			sourceTree = "<group>";
@@ -445,6 +472,15 @@
 				000000000000000000000915 /* OPEN_FONT_LICENSES.txt in Resources */,
 				000000000000000000000916 /* Assets.xcassets in Resources */,
 				000000000000000000000917 /* InfoPlist.strings in Resources */,
+				000000000000000000000931 /* PixelifySans.ttf in Resources */,
+				000000000000000000000932 /* FusionPixel8px-ZHHans.ttf in Resources */,
+				000000000000000000000933 /* FusionPixel8px-ZHHant.ttf in Resources */,
+				000000000000000000000934 /* FusionPixel8px-JA.ttf in Resources */,
+				000000000000000000000935 /* DotGothic16-Regular.ttf in Resources */,
+				000000000000000000000936 /* Changa.ttf in Resources */,
+				000000000000000000000937 /* NotoKufiArabic.ttf in Resources */,
+				000000000000000000000938 /* RussoOne-Regular.ttf in Resources */,
+				000000000000000000000939 /* Jura.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
