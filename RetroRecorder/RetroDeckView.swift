@@ -214,7 +214,7 @@ enum CassetteDeckStyle: String, CaseIterable, Identifiable {
 
 struct RealtimeWaveformDeckView: View {
     @Environment(\.appLanguage) private var appLanguage
-    @AppStorage(RealtimeWaveformMode.storageKey) private var selectedMode = RealtimeWaveformMode.seeWav
+    @AppStorage(RealtimeWaveformMode.storageKey) private var selectedMode = RealtimeWaveformMode.movingFrequencySpectrum
     @AppStorage(WaveformVisualFilterSettings.asciiVideoEnabledStorageKey) private var isASCIIFilterEnabled = false
 
     let isRecording: Bool
@@ -314,6 +314,14 @@ struct RealtimeWaveformDeckView: View {
 
     private var visualEffectPager: some View {
         TabView(selection: $selectedMode) {
+                ShadertoyMetalEffectView(
+                    effect: .movingFrequencySpectrum,
+                    spectrum: shadertoySpectrum,
+                    waveform: shadertoyWaveform,
+                    isActive: isModeAnimating(.movingFrequencySpectrum)
+                )
+                .tag(RealtimeWaveformMode.movingFrequencySpectrum)
+
                 SeeWavRealtimeBars(levels: levels, isActive: isModeAnimating(.seeWav))
                     .tag(RealtimeWaveformMode.seeWav)
 
@@ -368,14 +376,6 @@ struct RealtimeWaveformDeckView: View {
                     isActive: isModeAnimating(.microphoneGradient)
                 )
                     .tag(RealtimeWaveformMode.microphoneGradient)
-
-                ShadertoyMetalEffectView(
-                    effect: .movingFrequencySpectrum,
-                    spectrum: shadertoySpectrum,
-                    waveform: shadertoyWaveform,
-                    isActive: isModeAnimating(.movingFrequencySpectrum)
-                )
-                .tag(RealtimeWaveformMode.movingFrequencySpectrum)
 
                 ShadertoyMetalEffectView(
                     effect: .micRipples,
@@ -511,6 +511,7 @@ private struct ASCIIVideoWaveformMask: View {
 private enum RealtimeWaveformMode: String, CaseIterable, Identifiable {
     static let storageKey = "selectedRealtimeWaveformMode"
 
+    case movingFrequencySpectrum
     case seeWav
     case dsWaveform
     case audioVisualizer
@@ -521,7 +522,6 @@ private enum RealtimeWaveformMode: String, CaseIterable, Identifiable {
     case colorFFT
     case triangleGalaxy
     case microphoneGradient
-    case movingFrequencySpectrum
     case micRipples
     case plasticSurface
 
