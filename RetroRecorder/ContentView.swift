@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 import UIKit
 
@@ -1559,9 +1560,7 @@ struct ContentView: View {
         recorder.reviewRecording = nil
 
         Task {
-            await recorder.prepare()
-
-            guard !recorder.isRecording else {
+            guard !recorder.isRecording, !recorder.isStartingRecording else {
                 return
             }
 
@@ -2111,7 +2110,7 @@ private struct GameBoyBottomControlsView: View {
                 }
                 .frame(width: 88, height: 88)
 
-                Text("START REC")
+                Text(recorder.isStartingRecording ? "STARTING..." : "START REC")
                     .retroFont(size: 13, weight: .black, design: .monospaced)
             }
             .foregroundStyle(.pixelInk)
@@ -2119,6 +2118,8 @@ private struct GameBoyBottomControlsView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PixelRecordButtonStyle())
+        .disabled(recorder.isStartingRecording)
+        .opacity(recorder.isStartingRecording ? 0.72 : 1)
         .accessibilityLabel("Start recording")
     }
 
@@ -2706,11 +2707,16 @@ private struct RecordingLibraryView: View {
     }
 }
 
-private struct RecordingRowView: View {
+private struct RecordingRowView: View, Equatable {
     @Environment(\.appLanguage) private var appLanguage
 
     let recording: RecordingItem
-    @ObservedObject var recorder: AudioRecorderViewModel
+    let recorder: AudioRecorderViewModel
+    let isPlaying: Bool
+    let playbackElapsed: TimeInterval
+    let isTranscribing: Bool
+    let isCopied: Bool
+    let languageTitle: String
     var isSelectionMode = false
     var isSelected = false
     var onToggleSelection: () -> Void = {}
@@ -2723,16 +2729,33 @@ private struct RecordingRowView: View {
     @State private var showingDetails = false
     @State private var renameText = ""
 
+    static func == (lhs: RecordingRowView, rhs: RecordingRowView) -> Bool {
+        lhs.recording.id == rhs.recording.id
+            && lhs.recording.createdAt == rhs.recording.createdAt
+            && lhs.recording.duration == rhs.recording.duration
+            && lhs.recording.title == rhs.recording.title
+            && lhs.recording.metadata.modifiedAt == rhs.recording.metadata.modifiedAt
+            && lhs.recording.transcriptCharacterCount == rhs.recording.transcriptCharacterCount
+            && lhs.recording.tagTimes == rhs.recording.tagTimes
+            && lhs.isPlaying == rhs.isPlaying
+            && Int(lhs.playbackElapsed) == Int(rhs.playbackElapsed)
+            && lhs.isTranscribing == rhs.isTranscribing
+            && lhs.isCopied == rhs.isCopied
+            && lhs.languageTitle == rhs.languageTitle
+            && lhs.isSelectionMode == rhs.isSelectionMode
+            && lhs.isSelected == rhs.isSelected
+    }
+
     private var primaryTitle: String {
         recording.title
     }
 
     private var durationDisplayText: String {
-        guard recorder.playingRecordingID == recording.id else {
+        guard isPlaying else {
             return recording.durationText
         }
 
-        let elapsed = min(max(0, recorder.playbackElapsed), max(0, recording.duration))
+        let elapsed = min(max(0, playbackElapsed), max(0, recording.duration))
         return "\(RecordingItem.format(elapsed))/\(recording.durationText)"
     }
 
@@ -2744,11 +2767,13 @@ private struct RecordingRowView: View {
                         Image(systemName: isSelected ? "checkmark.square.fill" : "square")
                             .font(.title3.weight(.black))
                             .foregroundStyle(isSelected ? .pixelInk : .pixelInk.opacity(0.42))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 } else if !isExpanded {
                     rowIconButton(
-                        systemName: recorder.playingRecordingID == recording.id ? "stop.fill" : "play.fill",
+                        systemName: isPlaying ? "stop.fill" : "play.fill",
                         tint: .pixelInk
                     ) {
                         recorder.play(recording)
@@ -2807,7 +2832,7 @@ private struct RecordingRowView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     MiniPixelWaveformStrip(
                         seed: recording.id.absoluteString,
-                        isPlaying: recorder.playingRecordingID == recording.id
+                        isPlaying: isPlaying
                     )
                     .frame(height: 34)
 
@@ -2817,14 +2842,14 @@ private struct RecordingRowView: View {
                                 recorder.play(recording)
                             } label: {
                                 DetailActionButton(
-                                    systemName: recorder.playingRecordingID == recording.id ? "stop.circle.fill" : "play.circle.fill",
-                                    title: recorder.playingRecordingID == recording.id ? "STOP" : "PLAY",
+                                    systemName: isPlaying ? "stop.circle.fill" : "play.circle.fill",
+                                    title: isPlaying ? "STOP" : "PLAY",
                                     tint: .pixelInk
                                 )
                             }
                             .buttonStyle(.plain)
 
-                            if recorder.transcribingRecordingID == recording.id {
+                            if isTranscribing {
                                 ProgressView()
                                     .tint(.pixelInk)
                                     .frame(width: 62, height: 54)
@@ -2948,7 +2973,7 @@ private struct RecordingRowView: View {
                         Image(systemName: "globe")
                             .font(.headline.weight(.semibold))
 
-                        Text(recorder.languageTitle(for: recording))
+                        Text(languageTitle)
                             .retroFont(size: 9, weight: .black, design: .monospaced)
                             .lineLimit(1)
                             .truncationMode(.tail)
@@ -2964,7 +2989,7 @@ private struct RecordingRowView: View {
                         UIPasteboard.general.string = transcript
                         recorder.markTranscriptCopied(recording)
                     } label: {
-                        Image(systemName: recorder.copiedRecordingID == recording.id ? "checkmark.circle.fill" : "doc.on.doc")
+                        Image(systemName: isCopied ? "checkmark.circle.fill" : "doc.on.doc")
                             .font(.headline.weight(.semibold))
                             .foregroundStyle(.pixelInk)
                             .frame(width: 30, height: 30)
@@ -3203,14 +3228,65 @@ private struct MiniPixelWaveformStrip: View {
     }
 }
 
+@MainActor
+private final class RecordingHistoryProjection: ObservableObject {
+    @Published private(set) var recordings: [RecordingItem]
+    @Published private(set) var playingRecordingID: RecordingItem.ID?
+    @Published private(set) var playbackElapsed: TimeInterval
+    @Published private(set) var transcribingRecordingID: RecordingItem.ID?
+    @Published private(set) var copiedRecordingID: RecordingItem.ID?
+
+    private var cancellables = Set<AnyCancellable>()
+
+    init(recorder: AudioRecorderViewModel) {
+        recordings = recorder.recordings
+        playingRecordingID = recorder.playingRecordingID
+        playbackElapsed = TimeInterval(Int(recorder.playbackElapsed))
+        transcribingRecordingID = recorder.transcribingRecordingID
+        copiedRecordingID = recorder.copiedRecordingID
+
+        recorder.$recordings
+            .removeDuplicates()
+            .sink { [weak self] in self?.recordings = $0 }
+            .store(in: &cancellables)
+
+        recorder.$playingRecordingID
+            .removeDuplicates()
+            .sink { [weak self] in self?.playingRecordingID = $0 }
+            .store(in: &cancellables)
+
+        recorder.$playbackElapsed
+            .map { TimeInterval(Int($0)) }
+            .removeDuplicates()
+            .sink { [weak self] in self?.playbackElapsed = $0 }
+            .store(in: &cancellables)
+
+        recorder.$transcribingRecordingID
+            .removeDuplicates()
+            .sink { [weak self] in self?.transcribingRecordingID = $0 }
+            .store(in: &cancellables)
+
+        recorder.$copiedRecordingID
+            .removeDuplicates()
+            .sink { [weak self] in self?.copiedRecordingID = $0 }
+            .store(in: &cancellables)
+    }
+}
+
 private struct RecordingHistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appLanguage) private var appLanguage
 
-    @ObservedObject var recorder: AudioRecorderViewModel
+    let recorder: AudioRecorderViewModel
+    @StateObject private var projection: RecordingHistoryProjection
     @State private var isSelectionMode = false
     @State private var selectedRecordingIDs: Set<RecordingItem.ID> = []
     @State private var fullScreenRecording: RecordingItem?
+
+    init(recorder: AudioRecorderViewModel) {
+        self.recorder = recorder
+        _projection = StateObject(wrappedValue: RecordingHistoryProjection(recorder: recorder))
+    }
 
     var body: some View {
         ZStack {
@@ -3221,7 +3297,7 @@ private struct RecordingHistoryView: View {
                     historyHeader
 
                     Group {
-                        if recorder.recordings.isEmpty {
+                        if projection.recordings.isEmpty {
                             VStack(spacing: 12) {
                                 PixelSpeakerGrille()
                                     .frame(width: 64, height: 52)
@@ -3235,10 +3311,15 @@ private struct RecordingHistoryView: View {
                         } else {
                             ScrollView {
                                 LazyVStack(spacing: 0) {
-                                    ForEach(recorder.recordings) { recording in
+                                    ForEach(projection.recordings) { recording in
                                         RecordingRowView(
                                             recording: recording,
                                             recorder: recorder,
+                                            isPlaying: projection.playingRecordingID == recording.id,
+                                            playbackElapsed: projection.playbackElapsed,
+                                            isTranscribing: projection.transcribingRecordingID == recording.id,
+                                            isCopied: projection.copiedRecordingID == recording.id,
+                                            languageTitle: recorder.languageTitle(for: recording),
                                             isSelectionMode: isSelectionMode,
                                             isSelected: selectedRecordingIDs.contains(recording.id),
                                             onToggleSelection: {
@@ -3252,6 +3333,7 @@ private struct RecordingHistoryView: View {
                                                 openFullScreenPlayback(recording)
                                             }
                                         )
+                                        .equatable()
                                     }
                                 }
                             }
@@ -3262,6 +3344,10 @@ private struct RecordingHistoryView: View {
                     .overlay {
                         Rectangle()
                             .stroke(.pixelInk, lineWidth: 3)
+                    }
+
+                    if isSelectionMode {
+                        selectionToolbar
                     }
 
                     historyFooter
@@ -3284,37 +3370,10 @@ private struct RecordingHistoryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
-        .safeAreaInset(edge: .bottom) {
-            if isSelectionMode {
-                HStack(spacing: 12) {
-                    Text(appLanguage.format(.selectedCountFormat, selectedRecordingIDs.count))
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.pixelInk.opacity(0.72))
-
-                    Spacer()
-
-                    Button {
-                        deleteSelectedRecordings()
-                    } label: {
-                        Label(appLanguage.text(.delete), systemImage: "trash.fill")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(selectedRecordingIDs.isEmpty ? .pixelInk.opacity(0.42) : .pixelPaper)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(selectedRecordingIDs.isEmpty ? Color.pixelInk.opacity(0.12) : Color.pixelInk, in: PixelCornerShape(cornerRadius: 5))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(selectedRecordingIDs.isEmpty)
-                }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
-                .background(Color.pixelPanel.opacity(0.96))
-            }
-        }
         .fullScreenCover(item: $fullScreenRecording) { recording in
             RecordingPlaybackView(recording: recording, recorder: recorder)
         }
-        .onChange(of: recorder.recordings) { _, recordings in
+        .onChange(of: projection.recordings) { _, recordings in
             let existingIDs = Set(recordings.map(\.id))
             selectedRecordingIDs = selectedRecordingIDs.intersection(existingIDs)
             if let fullScreenRecording, existingIDs.contains(fullScreenRecording.id) == false {
@@ -3334,7 +3393,7 @@ private struct RecordingHistoryView: View {
                 Image(systemName: "arrow.left")
                     .font(.system(size: 18, weight: .black))
                     .foregroundStyle(.pixelInk)
-                    .frame(width: 38, height: 38)
+                    .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
 
@@ -3345,16 +3404,14 @@ private struct RecordingHistoryView: View {
                 .minimumScaleFactor(0.66)
                 .frame(maxWidth: .infinity)
 
-            if recorder.recordings.isEmpty {
+            if projection.recordings.isEmpty {
                 PixelSpeakerGrille()
                     .frame(width: 42, height: 38)
                     .opacity(0.58)
             } else {
                 Button {
-                    withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-                        isSelectionMode.toggle()
-                        selectedRecordingIDs.removeAll()
-                    }
+                    isSelectionMode.toggle()
+                    selectedRecordingIDs.removeAll()
                 } label: {
                     Text(isSelectionMode ? appLanguage.text(.cancel).uppercased() : appLanguage.text(.select).uppercased())
                         .retroFont(size: 12, weight: .black, design: .monospaced)
@@ -3362,7 +3419,7 @@ private struct RecordingHistoryView: View {
                         .lineLimit(2)
                         .minimumScaleFactor(0.56)
                         .multilineTextAlignment(.center)
-                        .frame(width: 68, height: 38)
+                        .frame(width: 68, height: 44)
                 }
                 .buttonStyle(.plain)
             }
@@ -3376,6 +3433,42 @@ private struct RecordingHistoryView: View {
         }
     }
 
+    private var selectionToolbar: some View {
+        HStack(spacing: 10) {
+            Text(appLanguage.format(.selectedCountFormat, selectedRecordingIDs.count))
+                .retroFont(size: 12, weight: .black, design: .monospaced)
+                .foregroundStyle(.pixelInk.opacity(0.72))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+
+            Spacer(minLength: 6)
+
+            Button {
+                deleteSelectedRecordings()
+            } label: {
+                Image(systemName: "trash.fill")
+                    .font(.system(size: 18, weight: .black))
+                    .foregroundStyle(selectedRecordingIDs.isEmpty ? .pixelInk.opacity(0.42) : .pixelPaper)
+                    .frame(width: 52, height: 44)
+                    .background(
+                        selectedRecordingIDs.isEmpty ? Color.pixelInk.opacity(0.12) : Color.pixelInk,
+                        in: PixelCornerShape(cornerRadius: 5)
+                    )
+            }
+            .buttonStyle(.plain)
+            .disabled(selectedRecordingIDs.isEmpty)
+            .accessibilityLabel(appLanguage.text(.delete))
+        }
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity)
+        .frame(height: 52)
+        .background(Color.pixelPaper)
+        .overlay {
+            Rectangle()
+                .stroke(.pixelInk.opacity(0.72), lineWidth: 2)
+        }
+    }
+
     private var historyFooter: some View {
         HStack {
             PixelSpeakerGrille()
@@ -3384,7 +3477,7 @@ private struct RecordingHistoryView: View {
 
             Spacer()
 
-            Text("\(recorder.recordings.count) RECORDINGS")
+            Text("\(projection.recordings.count) RECORDINGS")
                 .retroFont(size: 13, weight: .black, design: .monospaced)
                 .foregroundStyle(.pixelInk.opacity(0.64))
                 .lineLimit(1)

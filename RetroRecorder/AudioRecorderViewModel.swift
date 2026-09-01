@@ -219,10 +219,14 @@ enum RecordingTagAddResult: Equatable {
 private final class RecordingLocationProvider: NSObject, @preconcurrency CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private let geocoder = CLGeocoder()
-    private var authorizationContinuation: CheckedContinuation<CLAuthorizationStatus, Never>?
-    private var locationContinuation: CheckedContinuation<RecordingLocationMetadata?, Never>?
+    private var authorizationContinuations: [CheckedContinuation<CLAuthorizationStatus, Never>] = []
+    private var locationContinuations: [CheckedContinuation<RecordingLocationMetadata?, Never>] = []
     private(set) var locationSnapshot: RecordingLocationMetadata?
     private var didPrepare = false
+
+    var cachedLocationSnapshot: RecordingLocationMetadata? {
+        locationSnapshot
+    }
 
     override init() {
         super.init()
@@ -274,15 +278,19 @@ private final class RecordingLocationProvider: NSObject, @preconcurrency CLLocat
         }
 
         return await withCheckedContinuation { continuation in
-            authorizationContinuation = continuation
-            manager.requestWhenInUseAuthorization()
+            authorizationContinuations.append(continuation)
+            if authorizationContinuations.count == 1 {
+                manager.requestWhenInUseAuthorization()
+            }
         }
     }
 
     private func requestLocationSnapshot() async -> RecordingLocationMetadata? {
         await withCheckedContinuation { continuation in
-            locationContinuation = continuation
-            manager.requestLocation()
+            locationContinuations.append(continuation)
+            if locationContinuations.count == 1 {
+                manager.requestLocation()
+            }
         }
     }
 
@@ -304,21 +312,11 @@ private final class RecordingLocationProvider: NSObject, @preconcurrency CLLocat
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        guard let authorizationContinuation else {
-            return
-        }
-
-        self.authorizationContinuation = nil
-        authorizationContinuation.resume(returning: manager.authorizationStatus)
+        completeAuthorizationRequests(with: manager.authorizationStatus)
     }
 
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        guard let authorizationContinuation else {
-            return
-        }
-
-        self.authorizationContinuation = nil
-        authorizationContinuation.resume(returning: status)
+        completeAuthorizationRequests(with: status)
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -339,12 +337,23 @@ private final class RecordingLocationProvider: NSObject, @preconcurrency CLLocat
     }
 
     private func completeLocationRequest(with snapshot: RecordingLocationMetadata?) {
-        guard let locationContinuation else {
+        guard locationContinuations.isEmpty == false else {
             return
         }
 
-        self.locationContinuation = nil
-        locationContinuation.resume(returning: snapshot)
+        let continuations = locationContinuations
+        locationContinuations.removeAll()
+        continuations.forEach { $0.resume(returning: snapshot) }
+    }
+
+    private func completeAuthorizationRequests(with status: CLAuthorizationStatus) {
+        guard authorizationContinuations.isEmpty == false else {
+            return
+        }
+
+        let continuations = authorizationContinuations
+        authorizationContinuations.removeAll()
+        continuations.forEach { $0.resume(returning: status) }
     }
 
     private nonisolated static func shortAddress(from placemark: CLPlacemark?) -> String? {
@@ -385,6 +394,7 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
 
     @Published var inputs: [AudioInputOption] = []
     @Published var selectedInputID: AudioInputOption.ID?
+    @Published private(set) var isStartingRecording = false
     @Published var isRecording = false
     @Published var isPaused = false
     @Published var elapsed: TimeInterval = 0
@@ -544,13 +554,16 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
 
     func prepare() async {
         await endExistingRecordingLiveActivities()
-        await locationProvider.prepare()
 
         do {
             try inputManager.prepareSession(echoCancellationEnabled: echoCancellationMode == .voiceProcessing)
             refreshInputs(activateSession: false)
         } catch {
             errorMessage = error.localizedDescription
+        }
+
+        Task { @MainActor [locationProvider] in
+            await locationProvider.prepare()
         }
     }
 
@@ -766,9 +779,13 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
     }
 
     func startRecording() async {
-        guard !isRecording else {
+        guard !isRecording, !isStartingRecording else {
             return
         }
+
+        isStartingRecording = true
+        defer { isStartingRecording = false }
+        await Task.yield()
 
         stopPlayback()
 
@@ -790,7 +807,7 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
 
             let audioConfiguration = recordingAudioConfiguration
             let recordingDate = Date()
-            let locationSnapshot = await locationProvider.locationSnapshotForRecording()
+            let locationSnapshot = locationProvider.cachedLocationSnapshot
             let recordingTitle = RecordingStore.defaultRecordingTitle(
                 locationName: locationSnapshot?.address,
                 date: recordingDate
@@ -828,11 +845,6 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
             liveTranscript = ""
             liveActivityStatusText = nil
             activeRecordingTagTimes = []
-            isRecording = true
-            isPaused = false
-
-            await startRecordingLiveActivity(recordingURL: url)
-            await startLiveRecognition()
 
             switch noiseReductionMode {
             case .off, .rnnoise, .deepFilterNetV3, .dtln:
@@ -881,7 +893,10 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
 
                 try nextRecorder.start()
                 denoisedRecorder = nextRecorder
-                try RecordingStore.saveRecordingMetadata(recordingMetadata, for: url)
+                try RecordingStore.writeMetadata(recordingMetadata, for: url)
+                isRecording = true
+                isPaused = false
+                startRecordingAncillaryServices(recordingURL: url, recordingDate: recordingDate)
                 return
             }
         } catch {
@@ -1087,13 +1102,42 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         }
     }
 
-    private func startLiveRecognition() async {
+    private func startRecordingAncillaryServices(recordingURL: URL, recordingDate: Date) {
+        Task { @MainActor [weak self] in
+            await self?.startLiveRecognition(for: recordingURL)
+        }
+
+        Task { @MainActor [weak self] in
+            guard let self,
+                  self.isRecording,
+                  self.activeRecordingURL == recordingURL else {
+                return
+            }
+
+            await self.startRecordingLiveActivity(recordingURL: recordingURL)
+        }
+
+        Task { @MainActor [weak self] in
+            await self?.refreshLocationMetadata(
+                for: recordingURL,
+                recordingDate: recordingDate
+            )
+        }
+    }
+
+    private func startLiveRecognition(for recordingURL: URL) async {
         do {
             try await liveSpeechRecognizer.start(
                 localeIdentifier: SpeechLanguageOption.defaultIdentifier,
                 onResult: { [weak self] transcript in
                     Task { @MainActor in
-                        self?.liveTranscript = transcript
+                        guard let self,
+                              self.isRecording,
+                              self.activeRecordingURL == recordingURL else {
+                            return
+                        }
+
+                        self.liveTranscript = transcript
                     }
                 },
                 onError: { [weak self] error in
@@ -1106,8 +1150,48 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
                     }
                 }
             )
+
+            guard isRecording, activeRecordingURL == recordingURL else {
+                liveSpeechRecognizer.cancel()
+                return
+            }
         } catch {
-            liveTranscript = error.localizedDescription
+            if isRecording, activeRecordingURL == recordingURL {
+                liveTranscript = error.localizedDescription
+            }
+        }
+    }
+
+    private func refreshLocationMetadata(for recordingURL: URL, recordingDate: Date) async {
+        guard let locationSnapshot = await locationProvider.locationSnapshotForRecording() else {
+            return
+        }
+
+        do {
+            var metadata = RecordingStore.metadata(for: recordingURL)
+            metadata.location = locationSnapshot
+
+            if metadata.title?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty != false,
+               let address = locationSnapshot.address?.trimmingCharacters(in: .whitespacesAndNewlines),
+               address.isEmpty == false {
+                metadata.title = RecordingStore.defaultRecordingTitle(
+                    locationName: address,
+                    date: recordingDate
+                )
+            }
+
+            metadata.modifiedAt = Date()
+            try RecordingStore.writeMetadata(metadata, for: recordingURL)
+
+            if !isRecording || activeRecordingURL != recordingURL {
+                recordings = RecordingStore.loadRecordings()
+            }
+        } catch {
+            guard isRecording, activeRecordingURL == recordingURL else {
+                return
+            }
+
+            errorMessage = "保存定位信息失败：\(error.localizedDescription)"
         }
     }
 
@@ -1132,6 +1216,10 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         RecordingLiveActivityCommandStore.clearPendingCommand()
         liveActivityStatusText = "Live Activity 启动中"
         await endExistingRecordingLiveActivities()
+
+        guard isRecording, activeRecordingURL == recordingURL else {
+            return
+        }
 
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             liveActivityStatusText = "Live Activity 被系统禁用"
