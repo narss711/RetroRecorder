@@ -1933,6 +1933,7 @@ private struct PermissionOnboardingView: View {
     var body: some View {
         ZStack {
             AdaptiveAppBackground()
+                .ignoresSafeArea()
 
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
@@ -1952,27 +1953,21 @@ private struct PermissionOnboardingView: View {
                         }
                     }
                     .id(statusTick)
-
-                    Button(action: onComplete) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "arrow.right.circle.fill")
-                            Text(PermissionOnboardingCopy.continueTitle(for: appLanguage))
-                        }
-                        .retroFont(size: 13, weight: .black, design: .monospaced)
-                        .foregroundStyle(.pixelPanel)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(Color.pixelInk, in: PixelCornerShape(cornerRadius: 6))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint(PermissionOnboardingCopy.continueHint(for: appLanguage))
                 }
-                .padding(18)
-                .frame(maxWidth: 620)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: 620, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 18)
+                .padding(.top, 18)
+                .padding(.bottom, 16)
             }
         }
-        .ignoresSafeArea()
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            continueButton
+                .padding(.horizontal, 18)
+                .padding(.top, 8)
+                .padding(.bottom, 8)
+                .background(Color.pixelPanel)
+        }
         .onChange(of: scenePhase) { _, newPhase in
             guard newPhase == .active else {
                 return
@@ -1980,6 +1975,22 @@ private struct PermissionOnboardingView: View {
 
             statusTick += 1
         }
+    }
+
+    private var continueButton: some View {
+        Button(action: onComplete) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.right.circle.fill")
+                Text(PermissionOnboardingCopy.continueTitle(for: appLanguage))
+            }
+            .retroFont(size: 13, weight: .black, design: .monospaced)
+            .foregroundStyle(.pixelPanel)
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .background(Color.pixelInk, in: PixelCornerShape(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(PermissionOnboardingCopy.continueHint(for: appLanguage))
     }
 
     private func permissionRow(_ permission: AppPermissionKind) -> some View {
