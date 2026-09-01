@@ -370,14 +370,6 @@ struct RealtimeWaveformDeckView: View {
                     .tag(RealtimeWaveformMode.microphoneGradient)
 
                 ShadertoyMetalEffectView(
-                    effect: .jj1,
-                    spectrum: shadertoySpectrum,
-                    waveform: shadertoyWaveform,
-                    isActive: isModeAnimating(.jj1)
-                )
-                .tag(RealtimeWaveformMode.jj1)
-
-                ShadertoyMetalEffectView(
                     effect: .movingFrequencySpectrum,
                     spectrum: shadertoySpectrum,
                     waveform: shadertoyWaveform,
@@ -392,14 +384,6 @@ struct RealtimeWaveformDeckView: View {
                     isActive: isModeAnimating(.micRipples)
                 )
                 .tag(RealtimeWaveformMode.micRipples)
-
-                ShadertoyMetalEffectView(
-                    effect: .forkPolarCircling,
-                    spectrum: shadertoySpectrum,
-                    waveform: shadertoyWaveform,
-                    isActive: isModeAnimating(.forkPolarCircling)
-                )
-                .tag(RealtimeWaveformMode.forkPolarCircling)
 
                 ShadertoyMetalEffectView(
                     effect: .plasticSurface,
@@ -537,10 +521,8 @@ private enum RealtimeWaveformMode: String, CaseIterable, Identifiable {
     case colorFFT
     case triangleGalaxy
     case microphoneGradient
-    case jj1
     case movingFrequencySpectrum
     case micRipples
-    case forkPolarCircling
     case plasticSurface
 
     var id: String { rawValue }
@@ -569,14 +551,10 @@ private enum RealtimeWaveformMode: String, CaseIterable, Identifiable {
             return "MIC GRADIENT"
         case .plasticSurface:
             return "PLASTIC SURFACE"
-        case .jj1:
-            return "JJ1"
         case .movingFrequencySpectrum:
             return "MOVING SPECTRUM"
         case .micRipples:
             return "MIC RIPPLES"
-        case .forkPolarCircling:
-            return "FORK POLAR"
         }
     }
 }

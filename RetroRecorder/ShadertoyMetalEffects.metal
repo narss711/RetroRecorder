@@ -482,60 +482,6 @@ fragment float4 plasticSurfaceFragment(
     return float4(color, 1.0);
 }
 
-// Metal reconstruction based on https://www.shadertoy.com/view/M3XSR2.
-// The source is unavailable outside Shadertoy's browser verification flow.
-fragment float4 jj1Fragment(
-    AudioVertexOut input [[stage_in]],
-    constant AudioFrameUniforms &frame [[buffer(0)]],
-    device const float *spectrum [[buffer(1)]],
-    device const float *waveform [[buffer(2)]],
-    device const float *history [[buffer(3)]]
-) {
-    float2 resolution = max(frame.resolution, float2(1.0));
-    float2 point = (2.0 * input.position.xy - resolution) / min(resolution.x, resolution.y);
-    float bass = pow(sampleAudio(spectrum, 0.025), 0.58);
-    float middle = pow(sampleAudio(spectrum, 0.16), 0.62);
-    float treble = pow(sampleAudio(spectrum, 0.48), 0.68);
-    float wave = sampleAudio(waveform, clamp(point.x * 0.35 + 0.5, 0.0, 1.0));
-
-    float angle = frame.time * (0.10 + bass * 0.08);
-    float sineAngle = sin(angle);
-    float cosineAngle = cos(angle);
-    point = float2(
-        cosineAngle * point.x - sineAngle * point.y,
-        sineAngle * point.x + cosineAngle * point.y
-    );
-    point += float2(wave * 0.11, sin(frame.time * 0.37) * middle * 0.045);
-
-    float radius = length(point);
-    float polar = atan2(point.y, point.x);
-    float3 background = themedBackground(frame);
-    float3 color = background;
-    for (int layer = 0; layer < 7; ++layer) {
-        float layerValue = float(layer);
-        float frequencyProgress = fract(
-            polar / 6.28318530718 + layerValue * 0.137 + frame.time * 0.008
-        );
-        float fft = pow(sampleAudio(spectrum, pow(frequencyProgress, 1.85) * 0.72), 0.58);
-        float petals = sin(polar * (3.0 + fmod(layerValue, 3.0)) + frame.time * (0.24 + layerValue * 0.035));
-        float ringRadius = 0.16 + layerValue * 0.082;
-        ringRadius += petals * (0.022 + fft * 0.032);
-        ringRadius += fft * (0.045 + layerValue * 0.004);
-        float distance = abs(radius - ringRadius);
-        float core = 1.0 - smoothstep(0.0025, 0.010, distance);
-        float glow = 0.0038 / (distance + 0.0038);
-        float3 layerColor = spectrumPalette(frequencyProgress + layerValue * 0.091 + treble * 0.08);
-        color += layerColor * (core * (0.50 + fft * 1.15) + glow * glow * (0.024 + fft * 0.07));
-    }
-
-    float centerDistance = abs(radius - (0.055 + bass * 0.035));
-    float centerGlow = 0.006 / (centerDistance + 0.006);
-    color += mix(float3(0.15, 0.55, 1.0), float3(1.0, 0.18, 0.72), middle) * centerGlow * centerGlow * 0.12;
-    color = mix(background, color, 1.0 - smoothstep(0.78, 1.38, radius));
-    color += (hash21(input.position.xy + floor(frame.time * 60.0)) - 0.5) * 0.003;
-    return float4(max(color, float3(0.0)), 1.0);
-}
-
 inline float3 movingSpectrumPalette(float amplitude, float age) {
     float3 cold = float3(0.012, 0.035, 0.12);
     float3 cyan = float3(0.02, 0.82, 1.0);
@@ -631,57 +577,6 @@ fragment float4 micRipplesFragment(
     color += rippleColor * (rippleCore * (0.28 + fft * 1.25) + rippleGlow * rippleGlow * 0.10) * fade;
     color += mix(bright, hot, bass) * center * center * (0.10 + bass * 0.28);
     color += rippleColor * abs(angularWave) * 0.10 * (1.0 - smoothstep(0.0, 0.75, radius));
-    color += (hash21(input.position.xy + floor(frame.time * 60.0)) - 0.5) * 0.003;
-    return float4(max(color, float3(0.0)), 1.0);
-}
-
-// Metal reconstruction based on https://www.shadertoy.com/view/7tj3zm.
-fragment float4 forkPolarCirclingFragment(
-    AudioVertexOut input [[stage_in]],
-    constant AudioFrameUniforms &frame [[buffer(0)]],
-    device const float *spectrum [[buffer(1)]],
-    device const float *waveform [[buffer(2)]],
-    device const float *history [[buffer(3)]]
-) {
-    float2 resolution = max(frame.resolution, float2(1.0));
-    float2 point = (2.0 * input.position.xy - resolution) / min(resolution.x, resolution.y);
-    float radius = length(point);
-    float angle = atan2(point.y, point.x);
-    float around = fract(angle / 6.28318530718 + 0.5);
-    float bass = pow(sampleAudio(spectrum, 0.03), 0.60);
-    float3 background = themedBackground(frame);
-    float3 color = background;
-
-    for (int ring = 0; ring < 9; ++ring) {
-        float ringValue = float(ring);
-        float direction = fmod(ringValue, 2.0) < 1.0 ? 1.0 : -1.0;
-        float phase = fract(
-            around * (2.0 + fmod(ringValue, 4.0))
-            + direction * frame.time * (0.026 + ringValue * 0.003)
-            + ringValue * 0.119
-        );
-        float mirroredPhase = abs(phase * 2.0 - 1.0);
-        float fft = pow(sampleAudio(spectrum, pow(mirroredPhase, 1.72) * 0.76), 0.60);
-        float wave = sampleAudio(waveform, fract(phase + ringValue * 0.071));
-        float targetRadius = 0.11 + ringValue * 0.072;
-        targetRadius += fft * (0.028 + ringValue * 0.0035);
-        targetRadius += wave * 0.018;
-
-        float fork = abs(fract(phase * 3.0) - 0.5);
-        float arcMask = 1.0 - smoothstep(0.19, 0.29, fork);
-        float branch = 1.0 - smoothstep(0.015, 0.055, abs(fork - (0.09 + fft * 0.035)));
-        float distance = abs(radius - targetRadius);
-        float core = 1.0 - smoothstep(0.0025, 0.010, distance);
-        float glow = 0.0035 / (distance + 0.0035);
-        float3 ringColor = spectrumPalette(phase + ringValue * 0.083 + bass * 0.05);
-        float intensity = arcMask * (0.35 + fft * 1.18) + branch * (0.22 + fft * 0.55);
-        color += ringColor * (core * intensity + glow * glow * intensity * 0.045);
-    }
-
-    float spokePhase = abs(fract(angle * 3.0 / 6.28318530718 - frame.time * 0.035) - 0.5);
-    float spoke = 1.0 - smoothstep(0.018, 0.055, spokePhase);
-    color += float3(0.25, 0.58, 1.0) * spoke * (1.0 - smoothstep(0.08, 0.72, radius)) * (0.05 + bass * 0.18);
-    color = mix(background, color, 1.0 - smoothstep(0.76, 1.30, radius));
     color += (hash21(input.position.xy + floor(frame.time * 60.0)) - 0.5) * 0.003;
     return float4(max(color, float3(0.0)), 1.0);
 }

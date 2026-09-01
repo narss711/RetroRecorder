@@ -69,10 +69,8 @@ enum ShadertoyMetalEffect: String {
     case triangleGalaxy
     case microphoneGradient
     case plasticSurface
-    case jj1
     case movingFrequencySpectrum
     case micRipples
-    case forkPolarCircling
 
     var fragmentFunctionName: String {
         switch self {
@@ -88,14 +86,10 @@ enum ShadertoyMetalEffect: String {
             return "microphoneGradientFragment"
         case .plasticSurface:
             return "plasticSurfaceFragment"
-        case .jj1:
-            return "jj1Fragment"
         case .movingFrequencySpectrum:
             return "movingFrequencySpectrumFragment"
         case .micRipples:
             return "micRipplesFragment"
-        case .forkPolarCircling:
-            return "forkPolarCirclingFragment"
         }
     }
 
@@ -117,14 +111,10 @@ enum ShadertoyMetalEffect: String {
             return "Microphone gradient waveform visualization"
         case .plasticSurface:
             return "Plastic audio surface visualization"
-        case .jj1:
-            return "JJ1 audio visualization"
         case .movingFrequencySpectrum:
             return "Moving frequency spectrum visualization"
         case .micRipples:
             return "Microphone ripple visualization"
-        case .forkPolarCircling:
-            return "Fork polar circling visualization"
         }
     }
 }
