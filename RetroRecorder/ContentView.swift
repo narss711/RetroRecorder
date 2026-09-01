@@ -1372,6 +1372,7 @@ struct ContentView: View {
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
     @AppStorage(InterfaceRetroFont.storageKey) private var interfaceFontRaw = InterfaceRetroFont.system.rawValue
     @AppStorage(InterfaceColorTheme.storageKey) private var interfaceColorThemeRaw = InterfaceColorTheme.pocketOlive.rawValue
+    @AppStorage("permissionOnboardingCompleted") private var permissionOnboardingCompleted = false
 
     private var appLanguage: AppLanguage {
         AppLanguage.value(for: appLanguageRaw)
@@ -1405,25 +1406,26 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                AdaptiveAppBackground()
+            if permissionOnboardingCompleted {
+                ZStack {
+                    AdaptiveAppBackground()
 
-                GeometryReader { proxy in
-                    let isCompactHeight = proxy.size.height < 720
-                    let surfaceHeight = max(0, proxy.size.height - 12)
-                    let waveVisualHeight = min(
-                        isCompactHeight ? 230 : 410,
-                        max(
-                            isCompactHeight ? 128 : 168,
-                            proxy.size.height
-                                - (isCompactHeight ? 438 : 420)
-                                - (recorder.isRecording ? 0 : 34)
+                    GeometryReader { proxy in
+                        let isCompactHeight = proxy.size.height < 720
+                        let surfaceHeight = max(0, proxy.size.height - 12)
+                        let waveVisualHeight = min(
+                            isCompactHeight ? 230 : 410,
+                            max(
+                                isCompactHeight ? 128 : 168,
+                                proxy.size.height
+                                    - (isCompactHeight ? 438 : 420)
+                                    - (recorder.isRecording ? 0 : 34)
+                            )
                         )
-                    )
 
-                    ScrollView(.vertical, showsIndicators: false) {
-                        VStack(spacing: isCompactHeight ? 5 : 8) {
-                            header
+                        ScrollView(.vertical, showsIndicators: false) {
+                            VStack(spacing: isCompactHeight ? 5 : 8) {
+                                header
 
                             InputNoiseSelectorRow(
                                 inputs: recorder.inputs,
@@ -1460,19 +1462,27 @@ struct ContentView: View {
                                 recorder: recorder,
                                 onAddTag: addTagWithToast
                             )
+                            }
+                            .padding(isCompactHeight ? 7 : 10)
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: surfaceHeight)
+                            .background(Color(interfacePalette.pixelPanel), in: PixelCornerShape(cornerRadius: 8))
+                            .overlay {
+                                PixelCornerShape(cornerRadius: 8)
+                                    .stroke(Color(interfacePalette.pixelInk), lineWidth: 3)
+                            }
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 6)
                         }
-                        .padding(isCompactHeight ? 7 : 10)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: surfaceHeight)
-                        .background(Color(interfacePalette.pixelPanel), in: PixelCornerShape(cornerRadius: 8))
-                        .overlay {
-                            PixelCornerShape(cornerRadius: 8)
-                                .stroke(Color(interfacePalette.pixelInk), lineWidth: 3)
-                        }
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 6)
                     }
                 }
+            } else {
+                PermissionOnboardingView(
+                    recorder: recorder,
+                    onComplete: {
+                        permissionOnboardingCompleted = true
+                    }
+                )
             }
             .recordingTagToast($tagToast)
             .animation(.easeOut(duration: 0.18), value: interfaceColorThemeRaw)
@@ -1490,7 +1500,11 @@ struct ContentView: View {
                     .environment(\.interfaceRetroFont, interfaceFont)
                     .environment(\.font, interfaceFont.font(size: 15, weight: .regular))
             }
-            .task {
+            .task(id: permissionOnboardingCompleted) {
+                guard permissionOnboardingCompleted else {
+                    return
+                }
+
                 await recorder.prepare()
                 handlePendingLaunchAction()
             }
@@ -1901,6 +1915,373 @@ private struct RecordingQualityPill: View {
                     .opacity(0.22)
                     .padding(.trailing, 14)
             }
+    }
+}
+
+private struct PermissionOnboardingView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.appLanguage) private var appLanguage
+    @ObservedObject var recorder: AudioRecorderViewModel
+
+    let onComplete: () -> Void
+
+    @State private var requestingPermission: AppPermissionKind?
+    @State private var statusTick = 0
+
+    var body: some View {
+        ZStack {
+            AdaptiveAppBackground()
+
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(PermissionOnboardingCopy.pageTitle(for: appLanguage))
+                            .retroFont(size: 24, weight: .black, design: .monospaced)
+                            .foregroundStyle(.pixelInk)
+
+                        Text(PermissionOnboardingCopy.pageSubtitle(for: appLanguage))
+                            .retroFont(size: 12, weight: .bold, design: .monospaced)
+                            .foregroundStyle(.pixelInk.opacity(0.62))
+                    }
+
+                    VStack(spacing: 10) {
+                        ForEach(AppPermissionKind.allCases) { permission in
+                            permissionRow(permission)
+                        }
+                    }
+                    .id(statusTick)
+
+                    Button(action: onComplete) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.right.circle.fill")
+                            Text(PermissionOnboardingCopy.continueTitle(for: appLanguage))
+                        }
+                        .retroFont(size: 13, weight: .black, design: .monospaced)
+                        .foregroundStyle(.pixelPanel)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(Color.pixelInk, in: PixelCornerShape(cornerRadius: 6))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint(PermissionOnboardingCopy.continueHint(for: appLanguage))
+                }
+                .padding(18)
+                .frame(maxWidth: 620)
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .ignoresSafeArea()
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else {
+                return
+            }
+
+            statusTick += 1
+        }
+    }
+
+    private func permissionRow(_ permission: AppPermissionKind) -> some View {
+        let status = recorder.permissionStatus(for: permission)
+        let isRequesting = requestingPermission == permission
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: permission.iconName)
+                    .font(.system(size: 18, weight: .black))
+                    .foregroundStyle(.pixelInk)
+                    .frame(width: 28)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(permission.title(for: appLanguage))
+                        .retroFont(size: 14, weight: .black, design: .monospaced)
+                        .foregroundStyle(.pixelInk)
+
+                    Text(status.title(for: appLanguage))
+                        .retroFont(size: 10, weight: .bold, design: .monospaced)
+                        .foregroundStyle(status.isAuthorized ? .green : .pixelInk.opacity(0.52))
+                }
+
+                Spacer(minLength: 8)
+
+                Button {
+                    if status == .denied {
+                        openSettings()
+                    } else {
+                        request(permission)
+                    }
+                } label: {
+                    Text(actionTitle(for: status))
+                        .retroFont(size: 10, weight: .black, design: .monospaced)
+                        .foregroundStyle(status.isAuthorized ? .pixelInk.opacity(0.45) : .pixelPanel)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .padding(.horizontal, 10)
+                        .frame(minWidth: 70, minHeight: 34)
+                        .background(
+                            status.isAuthorized ? Color.pixelInk.opacity(0.12) : Color.pixelInk,
+                            in: PixelCornerShape(cornerRadius: 4)
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(status.isAuthorized || isRequesting)
+            }
+
+            Text(permission.explanation(for: appLanguage))
+                .retroFont(size: 11, weight: .regular, design: .monospaced)
+                .foregroundStyle(.pixelInk.opacity(0.72))
+                .fixedSize(horizontal: false, vertical: true)
+
+            if isRequesting {
+                ProgressView()
+                    .tint(.pixelInk)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(14)
+        .background(Color.pixelPanel, in: PixelCornerShape(cornerRadius: 6))
+        .overlay {
+            PixelCornerShape(cornerRadius: 6)
+                .stroke(Color.pixelInk.opacity(0.42), lineWidth: 2)
+        }
+    }
+
+    private func request(_ permission: AppPermissionKind) {
+        guard requestingPermission == nil else {
+            return
+        }
+
+        requestingPermission = permission
+        Task { @MainActor in
+            _ = await recorder.requestPermission(permission)
+            requestingPermission = nil
+            statusTick += 1
+        }
+    }
+
+    private func openSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else {
+            return
+        }
+
+        UIApplication.shared.open(url)
+    }
+
+    private func actionTitle(for status: AppPermissionStatus) -> String {
+        switch status {
+        case .notDetermined:
+            return PermissionOnboardingCopy.authorizeTitle(for: appLanguage)
+        case .authorized:
+            return PermissionOnboardingCopy.authorizedTitle(for: appLanguage)
+        case .denied:
+            return PermissionOnboardingCopy.settingsTitle(for: appLanguage)
+        }
+    }
+}
+
+private extension AppPermissionKind {
+    var iconName: String {
+        switch self {
+        case .microphone:
+            return "mic.fill"
+        case .speechRecognition:
+            return "waveform"
+        case .location:
+            return "location.fill"
+        }
+    }
+
+    func title(for language: AppLanguage) -> String {
+        switch language.resolvedLanguage {
+        case .system, .simplifiedChinese:
+            switch self {
+            case .microphone: return "麦克风权限"
+            case .speechRecognition: return "语音识别权限"
+            case .location: return "定位权限"
+            }
+        case .traditionalChinese:
+            switch self {
+            case .microphone: return "麥克風權限"
+            case .speechRecognition: return "語音辨識權限"
+            case .location: return "定位權限"
+            }
+        case .english:
+            switch self {
+            case .microphone: return "Microphone Permission"
+            case .speechRecognition: return "Speech Recognition Permission"
+            case .location: return "Location Permission"
+            }
+        case .spanish:
+            switch self {
+            case .microphone: return "Permiso del micrófono"
+            case .speechRecognition: return "Permiso de reconocimiento de voz"
+            case .location: return "Permiso de ubicación"
+            }
+        case .arabic:
+            switch self {
+            case .microphone: return "إذن الميكروفون"
+            case .speechRecognition: return "إذن التعرف على الكلام"
+            case .location: return "إذن الموقع"
+            }
+        case .portuguese:
+            switch self {
+            case .microphone: return "Permissão do microfone"
+            case .speechRecognition: return "Permissão de reconhecimento de fala"
+            case .location: return "Permissão de localização"
+            }
+        case .russian:
+            switch self {
+            case .microphone: return "Доступ к микрофону"
+            case .speechRecognition: return "Распознавание речи"
+            case .location: return "Доступ к геопозиции"
+            }
+        case .japanese:
+            switch self {
+            case .microphone: return "マイクのアクセス"
+            case .speechRecognition: return "音声認識のアクセス"
+            case .location: return "位置情報のアクセス"
+            }
+        case .german:
+            switch self {
+            case .microphone: return "Mikrofonzugriff"
+            case .speechRecognition: return "Spracherkennung"
+            case .location: return "Standortzugriff"
+            }
+        case .french:
+            switch self {
+            case .microphone: return "Autorisation du microphone"
+            case .speechRecognition: return "Reconnaissance vocale"
+            case .location: return "Autorisation de localisation"
+            }
+        }
+    }
+
+    func explanation(for language: AppLanguage) -> String {
+        switch language.resolvedLanguage {
+        case .system, .simplifiedChinese:
+            switch self {
+            case .microphone: return "需要访问麦克风来录制你的语音内容，这是录音功能得以实现的基础。"
+            case .speechRecognition: return "用于将你的录音实时转换为文字，转写过程在设备本地完成，不会上传到服务器。"
+            case .location: return "用于在录音时自动记录所在地点，方便你日后按地点回顾和查找录音内容。"
+            }
+        case .traditionalChinese:
+            switch self {
+            case .microphone: return "需要存取麥克風來錄製你的語音內容，這是錄音功能得以實現的基礎。"
+            case .speechRecognition: return "用於將你的錄音即時轉換為文字，轉寫過程在裝置本機完成，不會上傳到伺服器。"
+            case .location: return "用於在錄音時自動記錄所在位置，方便你日後按地點回顧和查找錄音內容。"
+            }
+        case .english:
+            switch self {
+            case .microphone: return "Microphone access is needed to record your voice. It is the foundation of the recording feature."
+            case .speechRecognition: return "Converts your recordings to text in real time. Transcription happens on this device and is not uploaded."
+            case .location: return "Records your location while recording, so you can review and find recordings by place later."
+            }
+        case .spanish:
+            switch self {
+            case .microphone: return "El acceso al micrófono permite grabar tu voz y es la base de la función de grabación."
+            case .speechRecognition: return "Convierte tus grabaciones en texto en tiempo real. El proceso se realiza en el dispositivo y no se sube."
+            case .location: return "Registra tu ubicación durante la grabación para revisar y buscar grabaciones por lugar."
+            }
+        case .arabic:
+            switch self {
+            case .microphone: return "نحتاج إلى الوصول إلى الميكروفون لتسجيل صوتك، فهو أساس وظيفة التسجيل."
+            case .speechRecognition: return "يحوّل تسجيلاتك إلى نص في الوقت الفعلي. تتم المعالجة على الجهاز ولا يتم رفعها إلى خادم."
+            case .location: return "يسجل موقعك أثناء التسجيل لتتمكن من مراجعة تسجيلاتك والبحث عنها حسب المكان."
+            }
+        case .portuguese:
+            switch self {
+            case .microphone: return "O acesso ao microfone é necessário para gravar sua voz e é essencial para a gravação."
+            case .speechRecognition: return "Converte suas gravações em texto em tempo real. O processamento ocorre no dispositivo e não é enviado."
+            case .location: return "Registra sua localização durante a gravação para revisar e encontrar gravações por local."
+            }
+        case .russian:
+            switch self {
+            case .microphone: return "Доступ к микрофону нужен для записи голоса и является основой функции записи."
+            case .speechRecognition: return "Преобразует запись в текст в реальном времени. Обработка выполняется на устройстве и не загружается."
+            case .location: return "Записывает ваше местоположение во время записи, чтобы находить записи по месту."
+            }
+        case .japanese:
+            switch self {
+            case .microphone: return "音声を録音するためにマイクへのアクセスが必要です。録音機能の基盤となります。"
+            case .speechRecognition: return "録音をリアルタイムで文字に変換します。処理は端末上で行われ、アップロードされません。"
+            case .location: return "録音時の場所を記録し、あとで場所から録音を探せるようにします。"
+            }
+        case .german:
+            switch self {
+            case .microphone: return "Der Mikrofonzugriff wird zum Aufnehmen deiner Stimme benötigt und ist die Grundlage der Aufnahmefunktion."
+            case .speechRecognition: return "Wandelt Aufnahmen in Echtzeit in Text um. Die Verarbeitung erfolgt auf dem Gerät und wird nicht hochgeladen."
+            case .location: return "Zeichnet deinen Standort während der Aufnahme auf, damit du Aufnahmen später nach Ort finden kannst."
+            }
+        case .french:
+            switch self {
+            case .microphone: return "L’accès au microphone est nécessaire pour enregistrer votre voix, au cœur de la fonction d’enregistrement."
+            case .speechRecognition: return "Convertit vos enregistrements en texte en temps réel. Le traitement reste sur l’appareil et n’est pas envoyé."
+            case .location: return "Enregistre votre position pendant l’enregistrement pour retrouver vos enregistrements par lieu."
+            }
+        }
+    }
+}
+
+private enum PermissionOnboardingCopy {
+    static func pageTitle(for language: AppLanguage) -> String {
+        localized(language, zhHans: "开始前设置权限", zhHant: "開始前設定權限", english: "Set Up Permissions", spanish: "Configurar permisos", arabic: "إعداد الأذونات", portuguese: "Configurar permissões", russian: "Настройка разрешений", japanese: "権限を設定", german: "Berechtigungen einrichten", french: "Configurer les autorisations")
+    }
+
+    static func pageSubtitle(for language: AppLanguage) -> String {
+        localized(language, zhHans: "按需启用功能，之后可在系统设置中修改", zhHant: "依需求啟用功能，之後可在系統設定中修改", english: "Enable only what you need. You can change this later in Settings.", spanish: "Activa solo lo necesario. Puedes cambiarlo después en Ajustes.", arabic: "فعّل ما تحتاجه فقط. يمكنك تغيير ذلك لاحقًا في الإعدادات.", portuguese: "Ative apenas o que precisar. Você pode alterar isso depois nos Ajustes.", russian: "Включите только нужные функции. Позже это можно изменить в настройках.", japanese: "必要な機能だけを有効にします。後で設定から変更できます。", german: "Aktiviere nur, was du brauchst. Du kannst dies später in den Einstellungen ändern.", french: "Activez uniquement ce dont vous avez besoin. Vous pourrez modifier ce choix dans Réglages.")
+    }
+
+    static func authorizeTitle(for language: AppLanguage) -> String {
+        localized(language, zhHans: "授权", zhHant: "授權", english: "Allow", spanish: "Permitir", arabic: "السماح", portuguese: "Permitir", russian: "Разрешить", japanese: "許可", german: "Erlauben", french: "Autoriser")
+    }
+
+    static func authorizedTitle(for language: AppLanguage) -> String {
+        localized(language, zhHans: "已授权", zhHant: "已授權", english: "Allowed", spanish: "Permitido", arabic: "مسموح", portuguese: "Permitido", russian: "Разрешено", japanese: "許可済み", german: "Erlaubt", french: "Autorisé")
+    }
+
+    static func settingsTitle(for language: AppLanguage) -> String {
+        localized(language, zhHans: "前往设置", zhHant: "前往設定", english: "Open Settings", spanish: "Abrir ajustes", arabic: "فتح الإعدادات", portuguese: "Abrir Ajustes", russian: "Открыть настройки", japanese: "設定を開く", german: "Einstellungen öffnen", french: "Ouvrir les réglages")
+    }
+
+    static func continueTitle(for language: AppLanguage) -> String {
+        localized(language, zhHans: "进入 RetroRecorder", zhHant: "進入 RetroRecorder", english: "Continue to RetroRecorder", spanish: "Continuar a RetroRecorder", arabic: "المتابعة إلى RetroRecorder", portuguese: "Continuar para RetroRecorder", russian: "Перейти в RetroRecorder", japanese: "RetroRecorderへ進む", german: "Zu RetroRecorder", french: "Continuer vers RetroRecorder")
+    }
+
+    static func continueHint(for language: AppLanguage) -> String {
+        localized(language, zhHans: "未授权的功能将在使用时受限", zhHant: "未授權的功能將在使用時受限", english: "Features you did not allow will be limited when used.", spanish: "Las funciones no permitidas estarán limitadas al usarlas.", arabic: "ستكون الميزات غير المسموح بها محدودة عند استخدامها.", portuguese: "Os recursos não autorizados terão limitações durante o uso.", russian: "Функции без разрешения будут ограничены при использовании.", japanese: "許可しなかった機能は使用時に制限されます。", german: "Nicht erlaubte Funktionen sind bei der Nutzung eingeschränkt.", french: "Les fonctions non autorisées seront limitées lors de leur utilisation.")
+    }
+
+    private static func localized(_ language: AppLanguage, zhHans: String, zhHant: String, english: String, spanish: String, arabic: String, portuguese: String, russian: String, japanese: String, german: String, french: String) -> String {
+        switch language.resolvedLanguage {
+        case .system, .simplifiedChinese: return zhHans
+        case .traditionalChinese: return zhHant
+        case .english: return english
+        case .spanish: return spanish
+        case .arabic: return arabic
+        case .portuguese: return portuguese
+        case .russian: return russian
+        case .japanese: return japanese
+        case .german: return german
+        case .french: return french
+        }
+    }
+}
+
+private extension AppPermissionStatus {
+    func title(for language: AppLanguage) -> String {
+        switch self {
+        case .notDetermined:
+            return PermissionOnboardingCopy.localizedStatus(language, zhHans: "尚未授权", zhHant: "尚未授權", english: "Not allowed yet", spanish: "Aún no permitido", arabic: "لم يُسمح بعد", portuguese: "Ainda não permitido", russian: "Еще не разрешено", japanese: "未許可", german: "Noch nicht erlaubt", french: "Pas encore autorisé")
+        case .authorized:
+            return PermissionOnboardingCopy.authorizedTitle(for: language)
+        case .denied:
+            return PermissionOnboardingCopy.localizedStatus(language, zhHans: "已拒绝，可在设置中修改", zhHant: "已拒絕，可在設定中修改", english: "Denied. Change in Settings.", spanish: "Denegado. Cambia en Ajustes.", arabic: "مرفوض. غيّره في الإعدادات.", portuguese: "Negado. Altere nos Ajustes.", russian: "Отказано. Измените в настройках.", japanese: "拒否済み。設定で変更できます。", german: "Abgelehnt. In den Einstellungen ändern.", french: "Refusé. Modifiez dans Réglages.")
+        }
+    }
+}
+
+private extension PermissionOnboardingCopy {
+    static func localizedStatus(_ language: AppLanguage, zhHans: String, zhHant: String, english: String, spanish: String, arabic: String, portuguese: String, russian: String, japanese: String, german: String, french: String) -> String {
+        localized(language, zhHans: zhHans, zhHant: zhHant, english: english, spanish: spanish, arabic: arabic, portuguese: portuguese, russian: russian, japanese: japanese, german: german, french: french)
     }
 }
 

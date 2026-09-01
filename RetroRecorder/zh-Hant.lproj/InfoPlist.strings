@@ -1,0 +1,3 @@
+"NSMicrophoneUsageDescription" = "需要存取麥克風來錄製你的語音內容，這是錄音功能得以實現的基礎。";
+"NSSpeechRecognitionUsageDescription" = "用於將你的錄音即時轉換為文字，轉寫過程在裝置本機完成，不會上傳到伺服器。";
+"NSLocationWhenInUseUsageDescription" = "用於在錄音時自動記錄所在位置，方便你日後按地點回顧和查找錄音內容。";

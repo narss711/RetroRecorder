@@ -191,6 +191,10 @@ enum TranscriptionError: LocalizedError {
 final class SpeechTranscriber {
     private var recognitionTask: SFSpeechRecognitionTask?
 
+    var authorizationStatus: SFSpeechRecognizerAuthorizationStatus {
+        SFSpeechRecognizer.authorizationStatus()
+    }
+
     func transcribe(
         url: URL,
         localeIdentifier: String,
@@ -251,7 +255,7 @@ final class SpeechTranscriber {
         recognitionTask = nil
     }
 
-    private func requestAuthorization() async -> SFSpeechRecognizerAuthorizationStatus {
+    func requestAuthorization() async -> SFSpeechRecognizerAuthorizationStatus {
         await withCheckedContinuation { continuation in
             SFSpeechRecognizer.requestAuthorization { status in
                 continuation.resume(returning: status)

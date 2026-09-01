@@ -1,0 +1,3 @@
+"NSMicrophoneUsageDescription" = "Der Mikrofonzugriff wird zum Aufnehmen deiner Stimme benötigt und ist die Grundlage der Aufnahmefunktion.";
+"NSSpeechRecognitionUsageDescription" = "Wandelt deine Aufnahmen in Echtzeit in Text um. Die Transkription erfolgt auf diesem Gerät und wird nicht an einen Server übertragen.";
+"NSLocationWhenInUseUsageDescription" = "Zeichnet deinen Standort während der Aufnahme automatisch auf, damit du Aufnahmen später nach Ort finden kannst.";

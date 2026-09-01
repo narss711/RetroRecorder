@@ -1,0 +1,3 @@
+"NSMicrophoneUsageDescription" = "音声を録音するためにマイクへのアクセスが必要です。録音機能の基盤となります。";
+"NSSpeechRecognitionUsageDescription" = "録音をリアルタイムで文字に変換します。文字起こしは端末上で行われ、サーバーにはアップロードされません。";
+"NSLocationWhenInUseUsageDescription" = "録音中の場所を自動的に記録し、あとで場所から録音を確認・検索できるようにします。";

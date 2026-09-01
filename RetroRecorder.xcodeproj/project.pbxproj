@@ -51,6 +51,7 @@
 		000000000000000000000914 /* SpecialElite-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000904 /* SpecialElite-Regular.ttf */; };
 		000000000000000000000915 /* OPEN_FONT_LICENSES.txt in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000905 /* OPEN_FONT_LICENSES.txt */; };
 		000000000000000000000916 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000906 /* Assets.xcassets */; };
+		000000000000000000000917 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000001100 /* InfoPlist.strings */; };
 		B5D2D516C990E03AAE794451 /* Pods_RetroRecorder.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B30EBBA20EE02534DA179B17 /* Pods_RetroRecorder.framework */; };
 /* End PBXBuildFile section */
 
@@ -140,6 +141,16 @@
 		000000000000000000000904 /* SpecialElite-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SpecialElite-Regular.ttf"; sourceTree = "<group>"; };
 		000000000000000000000905 /* OPEN_FONT_LICENSES.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OPEN_FONT_LICENSES.txt; sourceTree = "<group>"; };
 		000000000000000000000906 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		000000000000000000001001 /* InfoPlist.strings (English) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		000000000000000000001002 /* InfoPlist.strings (Simplified Chinese) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		000000000000000000001003 /* InfoPlist.strings (Traditional Chinese) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		000000000000000000001004 /* InfoPlist.strings (Spanish) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		000000000000000000001005 /* InfoPlist.strings (Arabic) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		000000000000000000001006 /* InfoPlist.strings (Portuguese) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		000000000000000000001007 /* InfoPlist.strings (Russian) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		000000000000000000001008 /* InfoPlist.strings (Japanese) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		000000000000000000001009 /* InfoPlist.strings (German) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		000000000000000000001010 /* InfoPlist.strings (French) */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		47F92EFC3B37A32456A66A4B /* Pods-RetroRecorder.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RetroRecorder.release.xcconfig"; path = "Target Support Files/Pods-RetroRecorder/Pods-RetroRecorder.release.xcconfig"; sourceTree = "<group>"; };
 		B30EBBA20EE02534DA179B17 /* Pods_RetroRecorder.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RetroRecorder.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		EF6870DEAD559160780B0892 /* Pods-RetroRecorder.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RetroRecorder.debug.xcconfig"; path = "Target Support Files/Pods-RetroRecorder/Pods-RetroRecorder.debug.xcconfig"; sourceTree = "<group>"; };
@@ -201,6 +212,7 @@
 				000000000000000000000906 /* Assets.xcassets */,
 				000000000000000000000414 /* RetroRecorder-Bridging-Header.h */,
 				000000000000000000000110 /* Info.plist */,
+				000000000000000000001100 /* InfoPlist.strings */,
 				000000000000000000000113 /* RetroRecorder.entitlements */,
 			);
 			path = RetroRecorder;
@@ -392,6 +404,15 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
+				"zh-Hant",
+				es,
+				ar,
+				pt,
+				ru,
+				ja,
+				de,
+				fr,
 			);
 			mainGroup = 000000000000000000000004;
 			packageReferences = (
@@ -423,6 +444,7 @@
 				000000000000000000000914 /* SpecialElite-Regular.ttf in Resources */,
 				000000000000000000000915 /* OPEN_FONT_LICENSES.txt in Resources */,
 				000000000000000000000916 /* Assets.xcassets in Resources */,
+				000000000000000000000917 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -507,6 +529,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		000000000000000000001100 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				000000000000000000001001 /* InfoPlist.strings (English) */,
+				000000000000000000001002 /* InfoPlist.strings (Simplified Chinese) */,
+				000000000000000000001003 /* InfoPlist.strings (Traditional Chinese) */,
+				000000000000000000001004 /* InfoPlist.strings (Spanish) */,
+				000000000000000000001005 /* InfoPlist.strings (Arabic) */,
+				000000000000000000001006 /* InfoPlist.strings (Portuguese) */,
+				000000000000000000001007 /* InfoPlist.strings (Russian) */,
+				000000000000000000001008 /* InfoPlist.strings (Japanese) */,
+				000000000000000000001009 /* InfoPlist.strings (German) */,
+				000000000000000000001010 /* InfoPlist.strings (French) */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin PBXTargetDependency section */
 		000000000000000000000028 /* PBXTargetDependency */ = {

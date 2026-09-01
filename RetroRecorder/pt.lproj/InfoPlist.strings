@@ -1,0 +1,3 @@
+"NSMicrophoneUsageDescription" = "O acesso ao microfone é necessário para gravar sua voz. Ele é essencial para a função de gravação.";
+"NSSpeechRecognitionUsageDescription" = "Converte suas gravações em texto em tempo real. A transcrição é feita neste dispositivo e não é enviada a um servidor.";
+"NSLocationWhenInUseUsageDescription" = "Registra automaticamente sua localização durante a gravação para que você possa revisar e encontrar gravações por local depois.";

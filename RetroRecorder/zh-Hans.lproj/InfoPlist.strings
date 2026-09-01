@@ -1,0 +1,3 @@
+"NSMicrophoneUsageDescription" = "需要访问麦克风来录制你的语音内容，这是录音功能得以实现的基础。";
+"NSSpeechRecognitionUsageDescription" = "用于将你的录音实时转换为文字，转写过程在设备本地完成，不会上传到服务器。";
+"NSLocationWhenInUseUsageDescription" = "用于在录音时自动记录所在地点，方便你日后按地点回顾和查找录音内容。";

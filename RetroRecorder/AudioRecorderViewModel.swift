@@ -6,6 +6,24 @@ import Foundation
 import MediaPlayer
 import onnxruntime_objc
 
+enum AppPermissionKind: String, CaseIterable, Identifiable {
+    case microphone
+    case speechRecognition
+    case location
+
+    var id: String { rawValue }
+}
+
+enum AppPermissionStatus: Equatable {
+    case notDetermined
+    case authorized
+    case denied
+
+    var isAuthorized: Bool {
+        self == .authorized
+    }
+}
+
 enum NoiseReductionMode: String, CaseIterable, Identifiable {
     case off
     case rnnoise
@@ -229,6 +247,10 @@ private final class RecordingLocationProvider: NSObject, @preconcurrency CLLocat
         locationSnapshot
     }
 
+    var authorizationStatus: CLAuthorizationStatus {
+        manager.authorizationStatus
+    }
+
     override init() {
         super.init()
         manager.delegate = self
@@ -270,6 +292,10 @@ private final class RecordingLocationProvider: NSObject, @preconcurrency CLLocat
         }
 
         return previousSnapshot
+    }
+
+    func requestAuthorization() async -> CLAuthorizationStatus {
+        await requestAuthorizationIfNeeded()
     }
 
     private func requestAuthorizationIfNeeded() async -> CLAuthorizationStatus {
@@ -693,6 +719,57 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         }
 
         refreshInputs(activateSession: true)
+    }
+
+    func permissionStatus(for permission: AppPermissionKind) -> AppPermissionStatus {
+        switch permission {
+        case .microphone:
+            switch AVAudioSession.sharedInstance().recordPermission {
+            case .granted:
+                return .authorized
+            case .undetermined:
+                return .notDetermined
+            case .denied:
+                return .denied
+            @unknown default:
+                return .denied
+            }
+        case .speechRecognition:
+            switch transcriber.authorizationStatus {
+            case .authorized:
+                return .authorized
+            case .notDetermined:
+                return .notDetermined
+            case .denied, .restricted:
+                return .denied
+            @unknown default:
+                return .denied
+            }
+        case .location:
+            switch locationProvider.authorizationStatus {
+            case .authorizedAlways, .authorizedWhenInUse:
+                return .authorized
+            case .notDetermined:
+                return .notDetermined
+            case .denied, .restricted:
+                return .denied
+            @unknown default:
+                return .denied
+            }
+        }
+    }
+
+    func requestPermission(_ permission: AppPermissionKind) async -> AppPermissionStatus {
+        switch permission {
+        case .microphone:
+            _ = await requestMicrophonePermission()
+        case .speechRecognition:
+            _ = await transcriber.requestAuthorization()
+        case .location:
+            _ = await locationProvider.requestAuthorization()
+        }
+
+        return permissionStatus(for: permission)
     }
 
     func localeIdentifier(for recording: RecordingItem) -> String {
@@ -1294,7 +1371,7 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         }
     }
 
-    private func requestMicrophonePermission() async -> Bool {
+    func requestMicrophonePermission() async -> Bool {
         switch AVAudioSession.sharedInstance().recordPermission {
         case .granted:
             return true

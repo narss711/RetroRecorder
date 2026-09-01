@@ -1,0 +1,3 @@
+"NSMicrophoneUsageDescription" = "Microphone access is needed to record your voice. It is the foundation of the recording feature.";
+"NSSpeechRecognitionUsageDescription" = "Used to convert your recordings to text in real time. Transcription happens on this device and is not uploaded to a server.";
+"NSLocationWhenInUseUsageDescription" = "Used to automatically record your location while recording, so you can review and find recordings by place later.";
