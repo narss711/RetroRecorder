@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1290" height="2796" viewBox="0 0 1290 2796">
+    
+    <defs>
+      <pattern id="grain" width="8" height="8" patternUnits="userSpaceOnUse">
+        <rect width="8" height="8" fill="#D9D5BF"/>
+        <circle cx="1" cy="1" r="0.6" fill="#B5B19D" opacity="0.6"/>
+        <circle cx="5" cy="6" r="0.5" fill="#F0ECD9" opacity="0.85"/>
+      </pattern>
+      <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="18" stdDeviation="0" flood-color="#484636" flood-opacity="0.38"/>
+      </filter>
+    </defs>
+    <rect width="1290" height="2796" fill="url(#grain)"/>
+    <rect x="44" y="44" width="1202" height="2708" fill="none" stroke="#20251B" stroke-width="8"/>
+    <g fill="#20251B">
+      <rect x="70" y="70" width="26" height="26"/><rect x="1194" y="70" width="26" height="26"/>
+      <rect x="70" y="2700" width="26" height="26"/><rect x="1194" y="2700" width="26" height="26"/>
+    </g>
+    <text x="112" y="172" text-anchor="start" fill="#B43A2B" font-family="Menlo, monospace" font-size="22" font-weight="900" letter-spacing="2">RECORDING HISTORY</text>
+    <text x="112" y="286" text-anchor="start" fill="#20251B" font-family="Menlo, monospace" font-size="66" font-weight="900" letter-spacing="0">每段声音</text>
+<text x="112" y="374" text-anchor="start" fill="#20251B" font-family="Menlo, monospace" font-size="66" font-weight="900" letter-spacing="0">都有来处</text>
+    <text x="112" y="468" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="29" font-weight="700" letter-spacing="0">按时间、地点与内容回顾录音。</text>
+<text x="112" y="510" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="29" font-weight="700" letter-spacing="0">重要资料安全保存在你的私人 iCloud 中。</text>
+    <g filter="url(#shadow)">
+    <g>
+      <rect x="96" y="592" width="1098" height="1780" rx="26" fill="#C8C4AF" stroke="#20251B" stroke-width="12"/>
+      <rect x="118" y="614" width="1054" height="1736" rx="14" fill="#E9E5D2" stroke="#3D4331" stroke-width="5"/>
+      <rect x="148" y="652" width="994" height="104" fill="#F5F0DC" stroke="#20251B" stroke-width="5"/>
+      <text x="192" y="720" text-anchor="start" fill="#20251B" font-family="Arial" font-size="37" font-weight="700" letter-spacing="0">☷</text>
+      <text x="645" y="718" text-anchor="middle" fill="#20251B" font-family="Menlo, monospace" font-size="32" font-weight="900" letter-spacing="2">HISTORY</text>
+      <text x="1094" y="720" text-anchor="end" fill="#20251B" font-family="Arial" font-size="34" font-weight="700" letter-spacing="0">⚙</text>
+      <rect x="148" y="780" width="994" height="84" fill="#F5F0DC" stroke="#20251B" stroke-width="5"/>
+      <rect x="164" y="794" width="306" height="56" fill="none" stroke="#3D4331" stroke-width="2"/>
+      <rect x="490" y="794" width="306" height="56" fill="none" stroke="#3D4331" stroke-width="2"/>
+      <rect x="816" y="794" width="310" height="56" fill="none" stroke="#3D4331" stroke-width="2"/>
+      <text x="177" y="815" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="12" font-weight="900" letter-spacing="0">INPUT</text>
+      <text x="177" y="839" text-anchor="start" fill="#20251B" font-family="Menlo, monospace" font-size="17" font-weight="900" letter-spacing="0">iPhone Mic  ▾</text>
+      <text x="503" y="815" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="12" font-weight="900" letter-spacing="0">NR</text>
+      <text x="503" y="839" text-anchor="start" fill="#20251B" font-family="Menlo, monospace" font-size="17" font-weight="900" letter-spacing="0">RNNoise  ▾</text>
+      <text x="829" y="815" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="12" font-weight="900" letter-spacing="0">AEC</text>
+      <text x="829" y="839" text-anchor="start" fill="#20251B" font-family="Menlo, monospace" font-size="17" font-weight="900" letter-spacing="0">Enabled  ▾</text>
+      <rect x="148" y="890" width="994" height="1058" fill="#AEB77B" stroke="#20251B" stroke-width="8"/>
+      <text x="182" y="940" text-anchor="start" fill="#20251B" font-family="Menlo, monospace" font-size="21" font-weight="900" letter-spacing="1">ARCHIVE</text>
+      <text x="1105" y="940" text-anchor="end" fill="#20251B" font-family="Menlo, monospace" font-size="18" font-weight="900" letter-spacing="0">PRIVATE CLOUD</text>
+      
+    <text x="182" y="1008" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="22" font-weight="900" letter-spacing="2">RECENT RECORDINGS</text>
+    <g>
+      <rect x="182" y="1050" width="926" height="228" fill="#F5F0DC" stroke="#3D4331" stroke-width="4"/>
+      <circle cx="246" cy="1164" r="34" fill="#B43A2B"/><polygon points="237,1142 237,1186 274,1164" fill="#F5F0DC"/>
+      <text x="312" y="1128" text-anchor="start" fill="#20251B" font-family="Menlo, monospace" font-size="25" font-weight="900" letter-spacing="0">中山路 · 2026.09.01 18:20</text>
+      <text x="312" y="1174" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="20" font-weight="700" letter-spacing="0">12:36  ·  中文  ·  1,428 字</text>
+      <text x="312" y="1220" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="19" font-weight="700" letter-spacing="0">会议摘要已经整理完成</text>
+    </g>
+    <g>
+      <rect x="182" y="1302" width="926" height="228" fill="#F5F0DC" stroke="#3D4331" stroke-width="4"/>
+      <circle cx="246" cy="1416" r="34" fill="#20251B"/><polygon points="237,1394 237,1438 274,1416" fill="#F5F0DC"/>
+      <text x="312" y="1380" text-anchor="start" fill="#20251B" font-family="Menlo, monospace" font-size="25" font-weight="900" letter-spacing="0">2026.09.01 09:14</text>
+      <text x="312" y="1426" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="20" font-weight="700" letter-spacing="0">03:51  ·  English  ·  508 words</text>
+      <text x="312" y="1472" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="19" font-weight="700" letter-spacing="0">Morning idea</text>
+    </g>
+    <g>
+      <rect x="182" y="1554" width="926" height="228" fill="#F5F0DC" stroke="#3D4331" stroke-width="4"/>
+      <circle cx="246" cy="1668" r="34" fill="#20251B"/><polygon points="237,1646 237,1690 274,1668" fill="#F5F0DC"/>
+      <text x="312" y="1632" text-anchor="start" fill="#20251B" font-family="Menlo, monospace" font-size="25" font-weight="900" letter-spacing="0">图书馆 · 2026.08.31 16:42</text>
+      <text x="312" y="1678" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="20" font-weight="700" letter-spacing="0">26:08  ·  中文  ·  2,016 字</text>
+      <text x="312" y="1724" text-anchor="start" fill="#59604A" font-family="Menlo, monospace" font-size="19" font-weight="700" letter-spacing="0">访谈录音 · 3 个标签</text>
+    </g>
+    
+    <rect x="148" y="1980" width="994" height="320" fill="#F5F0DC" stroke="#20251B" stroke-width="5"/>
+    <circle cx="645" cy="2128" r="84" fill="#B43A2B" stroke="#20251B" stroke-width="12"/>
+    <circle cx="645" cy="2128" r="48" fill="#D84F3C"/>
+    <text x="645" y="2266" text-anchor="middle" fill="#20251B" font-family="Menlo, monospace" font-size="24" font-weight="900" letter-spacing="1">NEW RECORDING</text>
+  
+  
+    </g></g>
+    <text x="645" y="2638" text-anchor="middle" fill="#59604A" font-family="Menlo, monospace" font-size="21" font-weight="900" letter-spacing="1">YOUR PRIVATE SOUND ARCHIVE</text>
+  </svg>
