@@ -4182,10 +4182,10 @@ private struct InterfaceColorThemePickerView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             sectionHeader(appLanguage.text(.interfaceTheme))
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 156), spacing: 10)], spacing: 10) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 144), spacing: 8)], spacing: 8) {
                 ForEach(InterfaceColorTheme.allCases) { theme in
                     Button {
                         selectedRawValue = theme.rawValue
@@ -4203,52 +4203,40 @@ private struct InterfaceColorThemePickerView: View {
 }
 
 private struct InterfaceColorThemeRow: View {
-    @Environment(\.appLanguage) private var appLanguage
-
     let theme: InterfaceColorTheme
     let isSelected: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Text(theme.title)
-                    .retroFont(size: 15, weight: .black, design: .monospaced)
-                    .foregroundStyle(.pixelInk)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.58)
+        HStack(spacing: 8) {
+            Text(theme.title)
+                .retroFont(size: 12, weight: .black, design: .monospaced)
+                .foregroundStyle(.pixelInk)
+                .lineLimit(1)
+                .minimumScaleFactor(0.68)
 
-                Spacer(minLength: 4)
+            Spacer(minLength: 2)
 
-                Image(systemName: isSelected ? "checkmark.square.fill" : "square")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(.pixelInk.opacity(isSelected ? 1 : 0.38))
-            }
-
-            HStack(spacing: 5) {
+            HStack(spacing: 3) {
                 ForEach(Array(theme.previewSwatches.enumerated()), id: \.offset) { _, color in
                     Rectangle()
                         .fill(color)
-                        .frame(height: 18)
+                        .frame(width: 13, height: 13)
                         .overlay {
                             Rectangle()
                                 .stroke(.pixelInk.opacity(0.2), lineWidth: 1)
                         }
                 }
             }
-
-            Text(theme.subtitle(language: appLanguage))
-                .retroFont(size: 11, weight: .semibold, design: .monospaced)
-                .foregroundStyle(.pixelInk.opacity(0.62))
-                .lineLimit(1)
-                .minimumScaleFactor(0.62)
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)
-        .background(Color.pixelPanel.opacity(isSelected ? 0.98 : 0.72), in: PixelCornerShape(cornerRadius: 7))
+        .padding(.horizontal, 9)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+        .background(Color.pixelPanel.opacity(isSelected ? 0.98 : 0.72), in: PixelCornerShape(cornerRadius: 6))
         .overlay {
-            PixelCornerShape(cornerRadius: 7)
+            PixelCornerShape(cornerRadius: 6)
                 .stroke(.pixelInk.opacity(isSelected ? 0.92 : 0.24), lineWidth: isSelected ? 2 : 1)
         }
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

@@ -3084,60 +3084,6 @@ enum InterfaceColorTheme: String, CaseIterable, Identifiable {
         }
     }
 
-    func subtitle(language: AppLanguage) -> String {
-        if language.resolvedLanguage == .english {
-            switch self {
-            case .pocketOlive:
-                return "Icon-matched olive handheld"
-            case .lcdGray:
-                return "Classic grayscale LCD"
-            case .amberCRT:
-                return "Warm amber monitor"
-            case .phosphorGreen:
-                return "Green phosphor display"
-            case .cobaltTerminal:
-                return "Cobalt and cyan console"
-            case .dracula:
-                return "Purple terminal contrast"
-            case .solarized:
-                return "Balanced cyan console"
-            case .nord:
-                return "Arctic blue-gray"
-            case .gruvbox:
-                return "Warm retro terminal"
-            case .catppuccin:
-                return "Soft mocha console"
-            case .monokai:
-                return "High-contrast coding"
-            }
-        }
-
-        switch self {
-        case .pocketOlive:
-            return "图标同款橄榄掌机色"
-        case .lcdGray:
-            return "经典灰阶 LCD"
-        case .amberCRT:
-            return "暖色琥珀显示器"
-        case .phosphorGreen:
-            return "绿色磷光屏"
-        case .cobaltTerminal:
-            return "钴蓝青色终端"
-        case .dracula:
-            return "紫色终端对比"
-        case .solarized:
-            return "青蓝平衡终端"
-        case .nord:
-            return "冷调蓝灰"
-        case .gruvbox:
-            return "暖色复古终端"
-        case .catppuccin:
-            return "柔和摩卡终端"
-        case .monokai:
-            return "高对比代码风"
-        }
-    }
-
     var previewSwatches: [Color] {
         let colors = darkPalette
         return [
