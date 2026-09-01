@@ -23,6 +23,7 @@ struct RecordingPlaybackView: View {
     @State private var tagToast: RecordingTagToast?
     @State private var retranscriptionProgress = 0.0
     @State private var retranscriptionProgressTask: Task<Void, Never>?
+    @State private var hasPlaybackSessionLease = false
     @FocusState private var isTitleFocused: Bool
 
     private let speedOptions = [0.25, 0.5, 1.0, 1.5, 2.0]
@@ -122,6 +123,10 @@ struct RecordingPlaybackView: View {
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .task {
+            if !hasPlaybackSessionLease {
+                hasPlaybackSessionLease = true
+                recorder.beginPlaybackSession()
+            }
             playback.prepare()
         }
         .onDisappear {
@@ -129,6 +134,10 @@ struct RecordingPlaybackView: View {
             persistTags()
             retranscriptionProgressTask?.cancel()
             playback.stop()
+            if hasPlaybackSessionLease {
+                hasPlaybackSessionLease = false
+                recorder.endPlaybackSession()
+            }
         }
         .alert(appLanguage.text(.alertTitle), isPresented: Binding(
             get: { playback.errorMessage != nil },
@@ -277,6 +286,7 @@ struct RecordingPlaybackView: View {
                         onSaveTranscript: saveTranscriptDraft,
                         onRetranscribe: retranscribeCurrentRecording
                     )
+                    .equatable()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -1005,7 +1015,7 @@ private final class RecordingPlaybackController: NSObject, ObservableObject {
 
     private func startTimer() {
         stopTimer()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.tick()
             }
@@ -1287,7 +1297,7 @@ private struct PlaybackWaveformCanvas: View {
     }
 }
 
-private struct TranscriptPlaybackDisplay: View {
+private struct TranscriptPlaybackDisplay: View, Equatable {
     @Environment(\.appLanguage) private var appLanguage
 
     let transcript: String?
@@ -1306,6 +1316,19 @@ private struct TranscriptPlaybackDisplay: View {
     let onSaveTranscript: (String) -> Void
     let onRetranscribe: () -> Void
     @FocusState private var isTranscriptFocused: Bool
+
+    static func == (lhs: TranscriptPlaybackDisplay, rhs: TranscriptPlaybackDisplay) -> Bool {
+        lhs.transcript == rhs.transcript
+            && lhs.languageTitle == rhs.languageTitle
+            && lhs.isTranscribing == rhs.isTranscribing
+            && lhs.transcriptDraftText == rhs.transcriptDraftText
+            && lhs.isEditingTranscript == rhs.isEditingTranscript
+            && Int(lhs.currentTime) == Int(rhs.currentTime)
+            && lhs.duration == rhs.duration
+            && lhs.textScale == rhs.textScale
+            && lhs.tagSeconds == rhs.tagSeconds
+            && lhs.selectedTagSecond == rhs.selectedTagSecond
+    }
 
     private var displayText: String {
         transcript?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false

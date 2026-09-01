@@ -467,6 +467,7 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
     private var playbackTimer: Timer?
     private var inputRefreshTimer: Timer?
     private var liveActivityCommandTimer: Timer?
+    private var playbackSessionLeaseCount = 0
     private var routeObserver: NSObjectProtocol?
     private var cloudStoreObserver: NSObjectProtocol?
     private var knownInputIDs = Set<AudioInputOption.ID>()
@@ -614,7 +615,9 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
     }
 
     private func refreshInputs(activateSession: Bool) {
-        if activateSession, !isRecording, playingRecordingID == nil {
+        let shouldActivateSession = activateSession && playbackSessionLeaseCount == 0
+
+        if shouldActivateSession, !isRecording, playingRecordingID == nil {
             try? inputManager.prepareSession()
         }
 
@@ -653,6 +656,26 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         if let fallbackInput = refreshedInputs.last ?? refreshedInputs.first {
             applyPreferredInput(fallbackInput)
         }
+    }
+
+    func beginPlaybackSession() {
+        playbackSessionLeaseCount += 1
+        inputRefreshTimer?.fireDate = .distantFuture
+    }
+
+    func endPlaybackSession() {
+        playbackSessionLeaseCount = max(0, playbackSessionLeaseCount - 1)
+
+        guard playbackSessionLeaseCount == 0 else {
+            return
+        }
+
+        inputRefreshTimer?.fireDate = Date().addingTimeInterval(2.5)
+        guard !isRecording, playingRecordingID == nil else {
+            return
+        }
+
+        refreshInputs(activateSession: true)
     }
 
     func localeIdentifier(for recording: RecordingItem) -> String {
@@ -1455,7 +1478,7 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         player = nil
         playingRecordingID = nil
         playbackElapsed = 0
-        refreshInputs(activateSession: true)
+        refreshInputs(activateSession: playbackSessionLeaseCount == 0)
     }
 
     private func startPlaybackTimer() {
@@ -1489,7 +1512,10 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         inputRefreshTimer?.invalidate()
         inputRefreshTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                guard let self, !self.isRecording, self.playingRecordingID == nil else {
+                guard let self,
+                      !self.isRecording,
+                      self.playingRecordingID == nil,
+                      self.playbackSessionLeaseCount == 0 else {
                     return
                 }
 
