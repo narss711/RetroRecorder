@@ -5,6 +5,7 @@ import SwiftUI
 struct RecordingPlaybackView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appLanguage) private var appLanguage
+    @Environment(\.interfaceRetroFont) private var interfaceRetroFont
     @ObservedObject private var recorder: AudioRecorderViewModel
     @StateObject private var playback: RecordingPlaybackController
 
@@ -181,6 +182,7 @@ struct RecordingPlaybackView: View {
             )
         }
         .recordingTagToast($tagToast)
+        .environment(\.font, interfaceRetroFont.font(size: 15, weight: .regular))
     }
 
     private var titleArea: some View {
@@ -342,7 +344,7 @@ struct RecordingPlaybackView: View {
                     }
 
                     Text("删除空白")
-                        .font(.system(size: 12, weight: .black, design: .rounded))
+                        .retroFont(size: 12, weight: .black, design: .rounded)
                 }
                 .frame(height: 32)
             }
@@ -354,7 +356,7 @@ struct RecordingPlaybackView: View {
                     removeTag(second: selectedTagSecond)
                 } label: {
                     Label(RecordingItem.format(TimeInterval(selectedTagSecond)), systemImage: "tag.slash.fill")
-                        .font(.system(size: 12, weight: .black, design: .monospaced))
+                        .retroFont(size: 12, weight: .black, design: .monospaced)
                         .labelStyle(.titleAndIcon)
                         .padding(.horizontal, 10)
                         .frame(height: 32)
@@ -572,11 +574,11 @@ private struct PlaybackProcessingOverlay: View {
 
                 VStack(spacing: 6) {
                     Text(title)
-                        .font(.system(size: 17, weight: .black, design: .rounded))
+                        .retroFont(size: 17, weight: .black, design: .rounded)
                         .foregroundStyle(.pixelInk)
 
                     Text(detail)
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .retroFont(size: 12, weight: .bold, design: .rounded)
                         .foregroundStyle(.pixelInk.opacity(0.58))
                 }
 
@@ -587,7 +589,7 @@ private struct PlaybackProcessingOverlay: View {
                         .frame(width: 210)
 
                     Text("\(Int(min(1, max(0, progress)) * 100))%")
-                        .font(.system(size: 12, weight: .black, design: .monospaced))
+                        .retroFont(size: 12, weight: .black, design: .monospaced)
                         .foregroundStyle(.pixelInk.opacity(0.62))
                 }
             }
@@ -688,6 +690,7 @@ private enum TranscriptDiffBuilder {
 
 private struct TranscriptDiffReviewSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.interfaceRetroFont) private var interfaceRetroFont
 
     let review: TranscriptDiffReview
     let onConfirm: () -> Void
@@ -717,7 +720,7 @@ private struct TranscriptDiffReviewSheet: View {
                         dismiss()
                     } label: {
                         Text("放弃")
-                            .font(.system(size: 15, weight: .black, design: .rounded))
+                            .retroFont(size: 15, weight: .black, design: .rounded)
                             .frame(maxWidth: .infinity)
                             .frame(height: 46)
                     }
@@ -730,7 +733,7 @@ private struct TranscriptDiffReviewSheet: View {
                         dismiss()
                     } label: {
                         Text("确认覆盖")
-                            .font(.system(size: 15, weight: .black, design: .rounded))
+                            .retroFont(size: 15, weight: .black, design: .rounded)
                             .frame(maxWidth: .infinity)
                             .frame(height: 46)
                     }
@@ -747,11 +750,11 @@ private struct TranscriptDiffReviewSheet: View {
     private func diffBlock(title: String, text: AttributedString) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(.system(size: 13, weight: .black, design: .rounded))
+                .retroFont(size: 13, weight: .black, design: .rounded)
                 .foregroundStyle(.pixelInk.opacity(0.62))
 
             Text(text)
-                .font(.system(size: 16, weight: .regular, design: .rounded))
+                .font(interfaceRetroFont.font(size: 16, weight: .regular, design: .rounded))
                 .lineSpacing(5)
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -767,6 +770,7 @@ private struct TranscriptDiffReviewSheet: View {
 
 private struct SilenceRemovalReviewSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.interfaceRetroFont) private var interfaceRetroFont
     @State private var titleText: String
     @State private var didFinish = false
 
@@ -798,12 +802,12 @@ private struct SilenceRemovalReviewSheet: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("另存为文件名")
-                        .font(.system(size: 13, weight: .black, design: .rounded))
+                        .retroFont(size: 13, weight: .black, design: .rounded)
                         .foregroundStyle(.pixelInk.opacity(0.62))
 
                     TextField(result.suggestedTitle, text: $titleText)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(interfaceRetroFont.font(size: 18, weight: .bold, design: .rounded))
                         .foregroundStyle(.pixelInk)
                         .padding(12)
                         .background(Color.pixelPanel.opacity(0.34), in: PixelCornerShape(cornerRadius: 6))
@@ -827,7 +831,7 @@ private struct SilenceRemovalReviewSheet: View {
                         dismiss()
                     } label: {
                         Text("放弃")
-                            .font(.system(size: 15, weight: .black, design: .rounded))
+                            .retroFont(size: 15, weight: .black, design: .rounded)
                             .frame(maxWidth: .infinity)
                             .frame(height: 46)
                     }
@@ -841,7 +845,7 @@ private struct SilenceRemovalReviewSheet: View {
                         dismiss()
                     } label: {
                         Text("确认另存")
-                            .font(.system(size: 15, weight: .black, design: .rounded))
+                            .retroFont(size: 15, weight: .black, design: .rounded)
                             .frame(maxWidth: .infinity)
                             .frame(height: 46)
                     }
@@ -865,13 +869,13 @@ private struct SilenceRemovalReviewSheet: View {
     private func statisticRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .retroFont(size: 14, weight: .bold, design: .rounded)
                 .foregroundStyle(.pixelInk.opacity(0.64))
 
             Spacer()
 
             Text(value)
-                .font(.system(size: 18, weight: .black, design: .monospaced))
+                .retroFont(size: 18, weight: .black, design: .monospaced)
                 .foregroundStyle(.pixelInk)
         }
     }
@@ -888,7 +892,7 @@ private struct LegendItem: View {
                 .frame(width: 10, height: 10)
 
             Text(title)
-                .font(.system(size: 12, weight: .black, design: .rounded))
+                .retroFont(size: 12, weight: .black, design: .rounded)
                 .foregroundStyle(.pixelInk.opacity(0.62))
         }
     }
@@ -1544,6 +1548,7 @@ private struct PlaybackWaveformCanvas: View {
 
 private struct TranscriptPlaybackDisplay: View, Equatable {
     @Environment(\.appLanguage) private var appLanguage
+    @Environment(\.interfaceRetroFont) private var interfaceRetroFont
 
     let transcript: String?
     let languageTitle: String
@@ -1658,7 +1663,7 @@ private struct TranscriptPlaybackDisplay: View, Equatable {
 
                     if isEditingTranscript {
                         TextEditor(text: $transcriptDraftText)
-                            .font(.system(size: CGFloat(17 * textScale), weight: .regular, design: .monospaced))
+                            .font(interfaceRetroFont.font(size: CGFloat(17 * textScale), weight: .regular, design: .monospaced))
                             .foregroundStyle(.pixelInk)
                             .lineSpacing(CGFloat(5 * textScale))
                             .scrollContentBackground(.hidden)
@@ -1671,7 +1676,7 @@ private struct TranscriptPlaybackDisplay: View, Equatable {
                             }
                     } else {
                         Text(displayText)
-                            .font(.system(size: CGFloat(17 * textScale), weight: .regular, design: .monospaced))
+                            .font(interfaceRetroFont.font(size: CGFloat(17 * textScale), weight: .regular, design: .monospaced))
                             .foregroundStyle(.pixelInk)
                             .lineSpacing(CGFloat(5 * textScale))
                             .textSelection(.enabled)

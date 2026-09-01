@@ -3729,6 +3729,7 @@ private final class RecordingHistoryProjection: ObservableObject {
 private struct RecordingHistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appLanguage) private var appLanguage
+    @Environment(\.interfaceRetroFont) private var interfaceRetroFont
 
     let recorder: AudioRecorderViewModel
     @StateObject private var projection: RecordingHistoryProjection
@@ -3825,6 +3826,9 @@ private struct RecordingHistoryView: View {
         .toolbar(.hidden, for: .navigationBar)
         .fullScreenCover(item: $fullScreenRecording) { recording in
             RecordingPlaybackView(recording: recording, recorder: recorder)
+                .environment(\.appLanguage, appLanguage)
+                .environment(\.interfaceRetroFont, interfaceRetroFont)
+                .environment(\.font, interfaceRetroFont.font(size: 15, weight: .regular))
         }
         .onChange(of: projection.recordings) { _, recordings in
             let existingIDs = Set(recordings.map(\.id))
