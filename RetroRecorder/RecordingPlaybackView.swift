@@ -1639,6 +1639,8 @@ private struct TranscriptPlaybackDisplay: View, Equatable {
 }
 
 private struct PlaybackControlArea: View {
+    @Environment(\.appLanguage) private var appLanguage
+
     let currentTime: TimeInterval
     let duration: TimeInterval
     let rate: Double
@@ -1742,7 +1744,7 @@ private struct PlaybackControlArea: View {
                     onSelectOutput(option)
                 } label: {
                     Label {
-                        Text(option.title)
+                        Text(option.title(for: appLanguage))
                     } icon: {
                         Image(systemName: option.iconName)
                     }
@@ -1755,8 +1757,8 @@ private struct PlaybackControlArea: View {
                 .frame(width: 44, height: 44)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("回放声音输出")
-        .accessibilityValue(outputMode.title)
+        .accessibilityLabel(outputMode.menuTitle(for: appLanguage))
+        .accessibilityValue(outputMode.title(for: appLanguage))
     }
 
     private func playbackButton(systemName: String, size: CGFloat, action: @escaping () -> Void) -> some View {
@@ -1781,14 +1783,123 @@ private enum PlaybackOutputMode: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
-        switch self {
-        case .speaker:
-            return "手机外放"
-        case .receiver:
-            return "手机听筒"
-        case .bluetooth:
-            return "蓝牙耳机"
+    func title(for language: AppLanguage) -> String {
+        switch language.resolvedLanguage {
+        case .system, .simplifiedChinese:
+            switch self {
+            case .speaker:
+                return "手机外放"
+            case .receiver:
+                return "手机听筒"
+            case .bluetooth:
+                return "蓝牙耳机"
+            }
+        case .traditionalChinese:
+            switch self {
+            case .speaker:
+                return "手機外放"
+            case .receiver:
+                return "手機聽筒"
+            case .bluetooth:
+                return "藍牙耳機"
+            }
+        case .english:
+            switch self {
+            case .speaker:
+                return "Phone Speaker"
+            case .receiver:
+                return "Phone Receiver"
+            case .bluetooth:
+                return "Bluetooth Headphones"
+            }
+        case .spanish:
+            switch self {
+            case .speaker:
+                return "Altavoz del teléfono"
+            case .receiver:
+                return "Auricular del teléfono"
+            case .bluetooth:
+                return "Auriculares Bluetooth"
+            }
+        case .arabic:
+            switch self {
+            case .speaker:
+                return "مكبر صوت الهاتف"
+            case .receiver:
+                return "سماعة الهاتف"
+            case .bluetooth:
+                return "سماعة Bluetooth"
+            }
+        case .portuguese:
+            switch self {
+            case .speaker:
+                return "Alto-falante do telefone"
+            case .receiver:
+                return "Auricular do telefone"
+            case .bluetooth:
+                return "Fones Bluetooth"
+            }
+        case .russian:
+            switch self {
+            case .speaker:
+                return "Динамик телефона"
+            case .receiver:
+                return "Разговорный динамик"
+            case .bluetooth:
+                return "Наушники Bluetooth"
+            }
+        case .japanese:
+            switch self {
+            case .speaker:
+                return "本体スピーカー"
+            case .receiver:
+                return "受話口"
+            case .bluetooth:
+                return "Bluetoothイヤホン"
+            }
+        case .german:
+            switch self {
+            case .speaker:
+                return "Telefonlautsprecher"
+            case .receiver:
+                return "Hörer"
+            case .bluetooth:
+                return "Bluetooth-Kopfhörer"
+            }
+        case .french:
+            switch self {
+            case .speaker:
+                return "Haut-parleur du téléphone"
+            case .receiver:
+                return "Écouteur du téléphone"
+            case .bluetooth:
+                return "Écouteurs Bluetooth"
+            }
+        }
+    }
+
+    func menuTitle(for language: AppLanguage) -> String {
+        switch language.resolvedLanguage {
+        case .system, .simplifiedChinese:
+            return "回放声音输出"
+        case .traditionalChinese:
+            return "回放聲音輸出"
+        case .english:
+            return "Playback Output"
+        case .spanish:
+            return "Salida de reproducción"
+        case .arabic:
+            return "إخراج التشغيل"
+        case .portuguese:
+            return "Saída de reprodução"
+        case .russian:
+            return "Выход воспроизведения"
+        case .japanese:
+            return "再生出力"
+        case .german:
+            return "Wiedergabeausgabe"
+        case .french:
+            return "Sortie de lecture"
         }
     }
 
