@@ -1941,20 +1941,7 @@ private struct LiveTranscriptPanel: View {
             }
             .foregroundStyle(.pixelInk)
 
-            Text(displayText)
-                .retroFont(size: 12, weight: .bold, design: .monospaced)
-                .foregroundStyle(.pixelInk)
-                .lineLimit(2)
-                .minimumScaleFactor(0.72)
-                .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .background(Color.pixelPaper, in: PixelCornerShape(cornerRadius: 4))
-                .overlay {
-                    PixelCornerShape(cornerRadius: 4)
-                        .stroke(style: StrokeStyle(lineWidth: 2, dash: [2, 3]))
-                        .foregroundStyle(.pixelInk)
-                }
+            liveTextWindow
         }
         .padding(.horizontal, 1)
         .sheet(isPresented: $showingFullText) {
@@ -1966,6 +1953,47 @@ private struct LiveTranscriptPanel: View {
                 hasCurrentTag: hasCurrentTag,
                 onAddTag: onAddTag
             )
+        }
+    }
+
+    private var liveTextWindow: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: false) {
+                Text(displayText)
+                    .retroFont(size: 12, weight: .bold, design: .monospaced)
+                    .foregroundStyle(.pixelInk)
+                    .minimumScaleFactor(0.72)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .id("main-live-text-bottom")
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 38, alignment: .top)
+            .clipped()
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(Color.pixelPaper, in: PixelCornerShape(cornerRadius: 4))
+            .overlay {
+                PixelCornerShape(cornerRadius: 4)
+                    .stroke(style: StrokeStyle(lineWidth: 2, dash: [2, 3]))
+                    .foregroundStyle(.pixelInk)
+            }
+            .onChange(of: text) { _, _ in
+                scrollLiveTextToBottom(proxy)
+            }
+            .onAppear {
+                scrollLiveTextToBottom(proxy)
+            }
+        }
+    }
+
+    private func scrollLiveTextToBottom(_ proxy: ScrollViewProxy) {
+        DispatchQueue.main.async {
+            var transaction = Transaction()
+            transaction.animation = nil
+            withTransaction(transaction) {
+                proxy.scrollTo("main-live-text-bottom", anchor: .bottom)
+            }
         }
     }
 }

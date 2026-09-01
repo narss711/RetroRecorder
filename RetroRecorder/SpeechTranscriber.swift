@@ -217,15 +217,24 @@ final class SpeechTranscriber {
 }
 
 final class LiveSpeechRecognizer {
+    private static let segmentDuration: TimeInterval = 45
+
+    private let stateQueue = DispatchQueue(label: "com.lutan.RetroRecorder.live-speech")
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var recognizer: SFSpeechRecognizer?
+    private var segmentRestartWorkItem: DispatchWorkItem?
+    private var segmentID = 0
+    private var segmentText = ""
+    private var committedText = ""
+    private var localeIdentifier = SpeechLanguageOption.defaultIdentifier
+    private var onResultHandler: ((String) -> Void)?
     private var isActive = false
 
     func start(
         localeIdentifier: String,
         onResult: @escaping (String) -> Void,
-        onError: @escaping (Error) -> Void
+        onError _: @escaping (Error) -> Void
     ) async throws {
         cancel()
 
@@ -240,58 +249,162 @@ final class LiveSpeechRecognizer {
             throw TranscriptionError.recognizerUnavailable(localeIdentifier)
         }
 
-        let request = SFSpeechAudioBufferRecognitionRequest()
-        request.shouldReportPartialResults = true
-        request.taskHint = .dictation
-
-        self.recognizer = recognizer
-        recognitionRequest = request
-        isActive = true
-
-        recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
-            guard let self, self.isActive else {
-                return
-            }
-
-            if let result {
-                let transcript = result.bestTranscription.formattedString
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-
-                if !transcript.isEmpty {
-                    onResult(transcript)
-                }
-            }
-
-            if let error {
-                onError(error)
-            }
+        stateQueue.sync {
+            self.recognizer = recognizer
+            self.localeIdentifier = localeIdentifier
+            self.onResultHandler = onResult
+            self.committedText = ""
+            self.segmentText = ""
+            self.isActive = true
+            self.startSegmentLocked()
         }
     }
 
     func append(_ buffer: AVAudioPCMBuffer) {
+        // Keep the buffer alive until append finishes while serializing it with
+        // segment rotation. This prevents a restart from dropping audio at the
+        // exact boundary between two recognition requests.
+        stateQueue.sync {
+            guard isActive else {
+                return
+            }
+
+            recognitionRequest?.append(buffer)
+        }
+    }
+
+    func stop() {
+        stateQueue.sync {
+            isActive = false
+            segmentRestartWorkItem?.cancel()
+            segmentRestartWorkItem = nil
+            recognitionRequest?.endAudio()
+            recognitionTask?.finish()
+            clearRecognitionStateLocked()
+        }
+    }
+
+    func cancel() {
+        stateQueue.sync {
+            isActive = false
+            segmentRestartWorkItem?.cancel()
+            segmentRestartWorkItem = nil
+            recognitionTask?.cancel()
+            recognitionRequest?.endAudio()
+            clearRecognitionStateLocked()
+        }
+    }
+
+    private func startSegmentLocked() {
+        guard isActive, let recognizer else {
+            return
+        }
+
+        segmentID += 1
+        let currentSegmentID = segmentID
+        segmentText = ""
+
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
+        request.taskHint = .dictation
+        recognitionRequest = request
+
+        recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
+            guard let self else {
+                return
+            }
+
+            self.stateQueue.async {
+                guard self.isActive, self.segmentID == currentSegmentID else {
+                    return
+                }
+
+                if let result {
+                    let nextText = result.bestTranscription.formattedString
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+
+                    if nextText.isEmpty == false {
+                        self.segmentText = nextText
+                        self.emitTranscriptLocked()
+                    }
+
+                    if result.isFinal {
+                        self.rotateSegmentLocked()
+                        return
+                    }
+                }
+
+                if error != nil {
+                    // Speech recognition can end a live task because of its
+                    // service timeout. Restart silently so Live Text keeps
+                    // receiving new words instead of replacing them with an
+                    // error message.
+                    self.rotateSegmentLocked()
+                }
+            }
+        }
+
+        let restartWorkItem = DispatchWorkItem { [weak self] in
+            self?.rotateSegmentLocked()
+        }
+        segmentRestartWorkItem?.cancel()
+        segmentRestartWorkItem = restartWorkItem
+        stateQueue.asyncAfter(
+            deadline: .now() + Self.segmentDuration,
+            execute: restartWorkItem
+        )
+    }
+
+    private func rotateSegmentLocked() {
         guard isActive else {
             return
         }
 
-        recognitionRequest?.append(buffer)
+        committedText = join(committedText, segmentText)
+        segmentRestartWorkItem?.cancel()
+        segmentRestartWorkItem = nil
+
+        let oldRequest = recognitionRequest
+        let oldTask = recognitionTask
+        recognitionRequest = nil
+        recognitionTask = nil
+        oldRequest?.endAudio()
+        oldTask?.finish()
+
+        emitTranscriptLocked()
+        startSegmentLocked()
     }
 
-    func stop() {
-        isActive = false
-        recognitionRequest?.endAudio()
-        recognitionTask?.finish()
+    private func emitTranscriptLocked() {
+        let transcript = join(committedText, segmentText)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard transcript.isEmpty == false else {
+            return
+        }
+
+        onResultHandler?(transcript)
+    }
+
+    private func join(_ left: String, _ right: String) -> String {
+        let left = left.trimmingCharacters(in: .whitespacesAndNewlines)
+        let right = right.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard left.isEmpty == false else { return right }
+        guard right.isEmpty == false else { return left }
+
+        let languageCode = localeIdentifier.split(separator: "-").first.map(String.init) ?? localeIdentifier
+        let usesWordSeparators = ["en", "es", "ar", "pt", "ru", "de", "fr"].contains(languageCode)
+        return usesWordSeparators ? "\(left) \(right)" : "\(left)\(right)"
+    }
+
+    private func clearRecognitionStateLocked() {
         recognitionTask = nil
         recognitionRequest = nil
         recognizer = nil
-    }
-
-    func cancel() {
-        isActive = false
-        recognitionTask?.cancel()
-        recognitionRequest?.endAudio()
-        recognitionTask = nil
-        recognitionRequest = nil
-        recognizer = nil
+        onResultHandler = nil
+        segmentText = ""
+        committedText = ""
     }
 
     private func requestAuthorization() async -> SFSpeechRecognizerAuthorizationStatus {
