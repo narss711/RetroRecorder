@@ -364,7 +364,6 @@ enum AppCopy: Hashable {
     case liveText
     case liveTextPlaceholder
     case startRec
-    case historySwipeHint
 }
 
 extension AppCopy {
@@ -490,8 +489,6 @@ extension AppCopy {
             return "正在识别语音输入..."
         case .startRec:
             return "开始录制"
-        case .historySwipeHint:
-            return "上滑约 1/5 快速进入历史录音"
         }
     }
 
@@ -617,8 +614,6 @@ extension AppCopy {
             return "Listening for speech..."
         case .startRec:
             return "Start Rec"
-        case .historySwipeHint:
-            return "SWIPE UP 1/5 TO OPEN HISTORY"
         }
     }
 }
@@ -1366,39 +1361,13 @@ extension TranscriptionEngine {
     }
 }
 
-private struct HistorySwipeHintView: View {
-    @Environment(\.appLanguage) private var appLanguage
-
-    let progress: CGFloat
-
-    var body: some View {
-        VStack(spacing: 5) {
-            Image(systemName: progress >= 1 ? "arrow.up.circle.fill" : "arrow.up")
-                .font(.system(size: 17, weight: .black))
-
-            Text(appLanguage.text(.historySwipeHint).uppercased())
-                .retroFont(size: 10, weight: .black, design: .monospaced)
-                .lineLimit(1)
-                .minimumScaleFactor(0.62)
-        }
-        .foregroundStyle(.pixelInk.opacity(0.54 + progress * 0.4))
-        .frame(maxWidth: .infinity)
-        .frame(height: 70)
-        .scaleEffect(0.96 + progress * 0.04)
-        .accessibilityLabel(appLanguage.text(.historySwipeHint))
-    }
-}
-
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject private var recorder = AudioRecorderViewModel()
     @State private var showingSettings = false
-    @State private var historyProgress: CGFloat = 0
-    @State private var isHistoryContentLoaded = false
+    @State private var showingHistory = false
     @State private var tagToast: RecordingTagToast?
-    @GestureState private var historySwipeTranslation: CGFloat = 0
     @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
     @AppStorage(InterfaceRetroFont.storageKey) private var interfaceFontRaw = InterfaceRetroFont.system.rawValue
     @AppStorage(InterfaceColorTheme.storageKey) private var interfaceColorThemeRaw = InterfaceColorTheme.pocketOlive.rawValue
@@ -1451,53 +1420,57 @@ struct ContentView: View {
                         )
                     )
 
-                    let currentHistoryProgress = interactiveHistoryProgress(
-                        viewportHeight: proxy.size.height
-                    )
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: isCompactHeight ? 5 : 8) {
+                            header
 
-                    ZStack {
-                        if currentHistoryProgress > 0.001 || historyProgress > 0.001 {
-                            Group {
-                                if isHistoryContentLoaded {
-                                    RecordingHistoryView(
-                                        recorder: recorder,
-                                        onClose: closeHistory
-                                    )
-                                } else {
-                                    HistoryTransitionPreview(recordings: recorder.recordings)
+                            InputNoiseSelectorRow(
+                                inputs: recorder.inputs,
+                                selectedInputID: recorder.selectedInputID,
+                                sourceTitle: deckSourceTitle,
+                                sourceIconName: deckSourceIconName,
+                                noiseReductionMode: recorder.noiseReductionMode,
+                                echoCancellationMode: recorder.echoCancellationMode,
+                                isEnabled: !recorder.isRecording,
+                                onInputSelect: { recorder.selectInput($0) },
+                                onInputRefresh: { recorder.refreshInputs() },
+                                onNoiseReductionSelect: { mode in
+                                    guard mode.isAvailable, !recorder.isRecording else {
+                                        return
+                                    }
+
+                                    recorder.noiseReductionMode = mode
+                                },
+                                onEchoCancellationSelect: { mode in
+                                    guard mode.isAvailable, !recorder.isRecording else {
+                                        return
+                                    }
+
+                                    recorder.echoCancellationMode = mode
                                 }
-                            }
-                            .environment(\.appLanguage, appLanguage)
-                            .environment(\.layoutDirection, appLanguage.layoutDirection)
-                            .environment(\.interfaceRetroFont, interfaceFont)
-                            .environment(\.font, interfaceFont.font(size: 15, weight: .regular))
-                            .opacity(currentHistoryProgress)
-                            .offset(
-                                y: reduceMotion
-                                    ? 0
-                                    : proxy.size.height * (1 - currentHistoryProgress)
                             )
-                            .allowsHitTesting(isHistoryContentLoaded && currentHistoryProgress > 0.98)
-                        }
 
-                        recordingHome(
-                            isCompactHeight: isCompactHeight,
-                            surfaceHeight: surfaceHeight,
-                            waveVisualHeight: waveVisualHeight,
-                            historyProgress: currentHistoryProgress
-                        )
-                        .offset(
-                            y: reduceMotion
-                                ? 0
-                                : -proxy.size.height * currentHistoryProgress
-                        )
-                        .allowsHitTesting(currentHistoryProgress < 0.98)
-                        .simultaneousGesture(
-                            historyTransitionGesture(viewportHeight: proxy.size.height)
-                        )
+                            RecorderLCDPanel(
+                                recorder: recorder,
+                                visualHeight: waveVisualHeight
+                            )
+
+                            GameBoyBottomControlsView(
+                                recorder: recorder,
+                                onAddTag: addTagWithToast
+                            )
+                        }
+                        .padding(isCompactHeight ? 7 : 10)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: surfaceHeight)
+                        .background(Color(interfacePalette.pixelPanel), in: PixelCornerShape(cornerRadius: 8))
+                        .overlay {
+                            PixelCornerShape(cornerRadius: 8)
+                                .stroke(Color(interfacePalette.pixelInk), lineWidth: 3)
+                        }
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 6)
                     }
-                    .clipped()
-                    .contentShape(Rectangle())
                 }
             }
             .recordingTagToast($tagToast)
@@ -1509,6 +1482,13 @@ struct ContentView: View {
             .environment(\.layoutDirection, appLanguage.layoutDirection)
             .environment(\.interfaceRetroFont, interfaceFont)
             .environment(\.font, interfaceFont.font(size: 15, weight: .regular))
+            .navigationDestination(isPresented: $showingHistory) {
+                RecordingHistoryView(recorder: recorder)
+                    .environment(\.appLanguage, appLanguage)
+                    .environment(\.layoutDirection, appLanguage.layoutDirection)
+                    .environment(\.interfaceRetroFont, interfaceFont)
+                    .environment(\.font, interfaceFont.font(size: 15, weight: .regular))
+            }
             .task {
                 await recorder.prepare()
                 handlePendingLaunchAction()
@@ -1569,13 +1549,13 @@ struct ContentView: View {
         case .history:
             showingSettings = false
             recorder.reviewRecording = nil
-            openHistory()
+            showingHistory = true
         }
     }
 
     private func startRecordingFromExternalTrigger() {
         showingSettings = false
-        closeHistory()
+        showingHistory = false
         recorder.reviewRecording = nil
 
         Task {
@@ -1603,166 +1583,12 @@ struct ContentView: View {
         }
     }
 
-    private func openHistory() {
-        isHistoryContentLoaded = false
-
-        withAnimation(historySpring) {
-            historyProgress = 1
-        }
-
-        loadHistoryContentAfterTransition()
-    }
-
-    private func closeHistory() {
-        withAnimation(historySpring) {
-            historyProgress = 0
-        }
-
-        unloadHistoryContentAfterTransition()
-    }
-
-    private var historySpring: Animation {
-        reduceMotion
-            ? .easeOut(duration: 0.16)
-            : .interactiveSpring(response: 0.3, dampingFraction: 0.86, blendDuration: 0.08)
-    }
-
-    private func interactiveHistoryProgress(viewportHeight: CGFloat) -> CGFloat {
-        let height = max(1, viewportHeight)
-        let draggedProgress = historyProgress - historySwipeTranslation / height
-        return min(1, max(0, draggedProgress))
-    }
-
-    private func historyTransitionGesture(viewportHeight: CGFloat) -> some Gesture {
-        DragGesture(minimumDistance: 16)
-            .updating($historySwipeTranslation) { value, state, _ in
-                guard recorder.isRecording == false, historyProgress < 0.98 else {
-                    return
-                }
-
-                state = value.translation.height
-            }
-            .onEnded { value in
-                guard recorder.isRecording == false, historyProgress < 0.98 else {
-                    return
-                }
-
-                let height = max(1, viewportHeight)
-                let releasedProgress = min(
-                    1,
-                    max(0, historyProgress - value.translation.height / height)
-                )
-                let projectedProgress = historyProgress - value.predictedEndTranslation.height / height
-                let targetProgress: CGFloat = projectedProgress >= 0.2 ? 1 : 0
-
-                historyProgress = releasedProgress
-
-                withAnimation(historySpring) {
-                    historyProgress = targetProgress
-                }
-
-                if targetProgress == 1 {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    loadHistoryContentAfterTransition()
-                } else {
-                    isHistoryContentLoaded = false
-                }
-            }
-    }
-
-    private func loadHistoryContentAfterTransition() {
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(reduceMotion ? 170 : 320))
-            guard historyProgress > 0.99 else {
-                return
-            }
-
-            isHistoryContentLoaded = true
-        }
-    }
-
-    private func unloadHistoryContentAfterTransition() {
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(reduceMotion ? 170 : 320))
-            guard historyProgress < 0.01 else {
-                return
-            }
-
-            isHistoryContentLoaded = false
-        }
-    }
-
-    @ViewBuilder
-    private func recordingHome(
-        isCompactHeight: Bool,
-        surfaceHeight: CGFloat,
-        waveVisualHeight: CGFloat,
-        historyProgress: CGFloat
-    ) -> some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: isCompactHeight ? 5 : 8) {
-                header
-
-                InputNoiseSelectorRow(
-                    inputs: recorder.inputs,
-                    selectedInputID: recorder.selectedInputID,
-                    sourceTitle: deckSourceTitle,
-                    sourceIconName: deckSourceIconName,
-                    noiseReductionMode: recorder.noiseReductionMode,
-                    echoCancellationMode: recorder.echoCancellationMode,
-                    isEnabled: !recorder.isRecording,
-                    onInputSelect: { recorder.selectInput($0) },
-                    onInputRefresh: { recorder.refreshInputs() },
-                    onNoiseReductionSelect: { mode in
-                        guard mode.isAvailable, !recorder.isRecording else {
-                            return
-                        }
-
-                        recorder.noiseReductionMode = mode
-                    },
-                    onEchoCancellationSelect: { mode in
-                        guard mode.isAvailable, !recorder.isRecording else {
-                            return
-                        }
-
-                        recorder.echoCancellationMode = mode
-                    }
-                )
-
-                RecorderLCDPanel(
-                    recorder: recorder,
-                    visualHeight: waveVisualHeight
-                )
-                .equatable()
-
-                GameBoyBottomControlsView(
-                    recorder: recorder,
-                    onAddTag: addTagWithToast
-                )
-
-                if !recorder.isRecording {
-                    HistorySwipeHintView(progress: historyProgress)
-                }
-            }
-            .padding(isCompactHeight ? 7 : 10)
-            .frame(maxWidth: .infinity)
-            .frame(minHeight: surfaceHeight)
-            .background(Color(interfacePalette.pixelPanel), in: PixelCornerShape(cornerRadius: 8))
-            .overlay {
-                PixelCornerShape(cornerRadius: 8)
-                    .stroke(Color(interfacePalette.pixelInk), lineWidth: 3)
-            }
-            .padding(.horizontal, 7)
-            .padding(.vertical, 6)
-        }
-    }
-
     private var header: some View {
         HStack(spacing: 8) {
             headerButton(systemName: "list.bullet.rectangle") {
                 showingSettings = false
                 recorder.reviewRecording = nil
-                openHistory()
+                showingHistory = true
             }
 
             Text("RETRO REC")
@@ -1957,15 +1783,11 @@ private struct PixelDropdownPanel<Content: View>: View {
     }
 }
 
-private struct RecorderLCDPanel: View, Equatable {
+private struct RecorderLCDPanel: View {
     @Environment(\.appLanguage) private var appLanguage
     @ObservedObject var recorder: AudioRecorderViewModel
 
     let visualHeight: CGFloat
-
-    static func == (lhs: RecorderLCDPanel, rhs: RecorderLCDPanel) -> Bool {
-        lhs.recorder === rhs.recorder && lhs.visualHeight == rhs.visualHeight
-    }
 
     private var liveText: String {
         guard recorder.isRecording else {
@@ -2045,116 +1867,6 @@ private struct RecorderLCDPanel: View, Equatable {
             Rectangle()
                 .stroke(.pixelInk, lineWidth: 3)
         }
-    }
-}
-
-private struct HistoryTransitionPreview: View {
-    @Environment(\.appLanguage) private var appLanguage
-
-    let recordings: [RecordingItem]
-
-    var body: some View {
-        ZStack {
-            AdaptiveAppBackground()
-
-            GeometryReader { proxy in
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "arrow.left")
-                            .font(.system(size: 18, weight: .black))
-                            .frame(width: 38, height: 38)
-
-                        Text("HISTORY")
-                            .retroFont(size: 22, weight: .black, design: .monospaced)
-                            .frame(maxWidth: .infinity)
-
-                        Text(appLanguage.text(.select).uppercased())
-                            .retroFont(size: 12, weight: .black, design: .monospaced)
-                            .frame(width: 68, height: 38)
-                    }
-                    .foregroundStyle(.pixelInk)
-                    .padding(.horizontal, 8)
-                    .frame(height: 46)
-                    .background(Color.pixelPaper)
-                    .overlay {
-                        Rectangle()
-                            .stroke(.pixelInk, lineWidth: 2)
-                    }
-
-                    Group {
-                        if recordings.isEmpty {
-                            Text(appLanguage.text(.noRecordings).uppercased())
-                                .retroFont(size: 14, weight: .black, design: .monospaced)
-                                .foregroundStyle(.pixelInk.opacity(0.62))
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        } else {
-                            VStack(spacing: 0) {
-                                ForEach(Array(recordings.prefix(6))) { recording in
-                                    HStack(spacing: 10) {
-                                        Image(systemName: "play.fill")
-                                            .font(.system(size: 13, weight: .black))
-                                            .frame(width: 34, height: 44)
-
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(recording.title)
-                                                .retroFont(size: 15, weight: .black, design: .monospaced)
-                                                .lineLimit(1)
-
-                                            Text("\(recording.durationText)  \(recording.subtitle)")
-                                                .retroFont(size: 10, weight: .bold, design: .monospaced)
-                                                .foregroundStyle(.pixelInk.opacity(0.52))
-                                                .lineLimit(1)
-                                        }
-
-                                        Spacer(minLength: 6)
-
-                                        Image(systemName: "chevron.down")
-                                            .font(.system(size: 13, weight: .black))
-                                            .frame(width: 34, height: 44)
-                                    }
-                                    .foregroundStyle(.pixelInk)
-                                    .padding(.horizontal, 10)
-                                    .frame(height: 66)
-                                    .overlay(alignment: .bottom) {
-                                        Rectangle()
-                                            .fill(Color.pixelInk.opacity(0.58))
-                                            .frame(height: 2)
-                                    }
-                                }
-
-                                Spacer(minLength: 0)
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.pixelPaper)
-                    .overlay {
-                        Rectangle()
-                            .stroke(.pixelInk, lineWidth: 3)
-                    }
-
-                    Text("\(recordings.count) RECORDINGS")
-                        .retroFont(size: 13, weight: .black, design: .monospaced)
-                        .foregroundStyle(.pixelInk.opacity(0.64))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 34)
-                }
-                .padding(9)
-                .frame(
-                    width: max(0, proxy.size.width - 14),
-                    height: max(0, proxy.size.height - 12)
-                )
-                .background(Color.pixelPanel)
-                .overlay {
-                    PixelCornerShape(cornerRadius: 8)
-                        .stroke(.pixelInk, lineWidth: 3)
-                }
-                .padding(.horizontal, 7)
-                .padding(.vertical, 6)
-            }
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
     }
 }
 
@@ -3032,8 +2744,6 @@ private struct RecordingRowView: View {
                         Image(systemName: isSelected ? "checkmark.square.fill" : "square")
                             .font(.title3.weight(.black))
                             .foregroundStyle(isSelected ? .pixelInk : .pixelInk.opacity(0.42))
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 } else if !isExpanded {
@@ -3498,12 +3208,9 @@ private struct RecordingHistoryView: View {
     @Environment(\.appLanguage) private var appLanguage
 
     @ObservedObject var recorder: AudioRecorderViewModel
-    var onClose: (() -> Void)? = nil
     @State private var isSelectionMode = false
     @State private var selectedRecordingIDs: Set<RecordingItem.ID> = []
     @State private var fullScreenRecording: RecordingItem?
-    @State private var showingShareSheet = false
-    @State private var shareURLs: [URL] = []
 
     var body: some View {
         ZStack {
@@ -3557,10 +3264,6 @@ private struct RecordingHistoryView: View {
                             .stroke(.pixelInk, lineWidth: 3)
                     }
 
-                    if isSelectionMode {
-                        selectionToolbar
-                    }
-
                     historyFooter
                 }
                 .padding(9)
@@ -3581,11 +3284,35 @@ private struct RecordingHistoryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .safeAreaInset(edge: .bottom) {
+            if isSelectionMode {
+                HStack(spacing: 12) {
+                    Text(appLanguage.format(.selectedCountFormat, selectedRecordingIDs.count))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.pixelInk.opacity(0.72))
+
+                    Spacer()
+
+                    Button {
+                        deleteSelectedRecordings()
+                    } label: {
+                        Label(appLanguage.text(.delete), systemImage: "trash.fill")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(selectedRecordingIDs.isEmpty ? .pixelInk.opacity(0.42) : .pixelPaper)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(selectedRecordingIDs.isEmpty ? Color.pixelInk.opacity(0.12) : Color.pixelInk, in: PixelCornerShape(cornerRadius: 5))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(selectedRecordingIDs.isEmpty)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .background(Color.pixelPanel.opacity(0.96))
+            }
+        }
         .fullScreenCover(item: $fullScreenRecording) { recording in
             RecordingPlaybackView(recording: recording, recorder: recorder)
-        }
-        .sheet(isPresented: $showingShareSheet) {
-            SystemShareSheet(activityItems: shareURLs.map { $0 as Any })
         }
         .onChange(of: recorder.recordings) { _, recordings in
             let existingIDs = Set(recordings.map(\.id))
@@ -3602,11 +3329,7 @@ private struct RecordingHistoryView: View {
     private var historyHeader: some View {
         HStack(spacing: 12) {
             Button {
-                if let onClose {
-                    onClose()
-                } else {
-                    dismiss()
-                }
+                dismiss()
             } label: {
                 Image(systemName: "arrow.left")
                     .font(.system(size: 18, weight: .black))
@@ -3653,53 +3376,6 @@ private struct RecordingHistoryView: View {
         }
     }
 
-    private var selectionToolbar: some View {
-        HStack(spacing: 8) {
-            Text(appLanguage.format(.selectedCountFormat, selectedRecordingIDs.count))
-                .retroFont(size: 12, weight: .black, design: .monospaced)
-                .foregroundStyle(.pixelInk.opacity(0.72))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-
-            Spacer(minLength: 4)
-
-            Button {
-                shareSelectedRecordings()
-            } label: {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 18, weight: .black))
-                    .foregroundStyle(selectedRecordingIDs.isEmpty ? .pixelInk.opacity(0.42) : .pixelPaper)
-                    .frame(width: 48, height: 44)
-                    .background(selectedRecordingIDs.isEmpty ? Color.pixelInk.opacity(0.12) : Color.pixelInk, in: PixelCornerShape(cornerRadius: 5))
-            }
-            .buttonStyle(.plain)
-            .disabled(selectedRecordingIDs.isEmpty)
-            .accessibilityLabel(appLanguage.text(.share))
-
-            Button {
-                deleteSelectedRecordings()
-            } label: {
-                Image(systemName: "trash.fill")
-                    .font(.system(size: 18, weight: .black))
-                    .foregroundStyle(selectedRecordingIDs.isEmpty ? .pixelInk.opacity(0.42) : .pixelPaper)
-                    .frame(width: 48, height: 44)
-                    .background(selectedRecordingIDs.isEmpty ? Color.pixelInk.opacity(0.12) : Color.pixelInk, in: PixelCornerShape(cornerRadius: 5))
-            }
-            .buttonStyle(.plain)
-            .disabled(selectedRecordingIDs.isEmpty)
-            .accessibilityLabel(appLanguage.text(.delete))
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .frame(maxWidth: .infinity)
-        .frame(height: 54)
-        .background(Color.pixelPaper)
-        .overlay {
-            Rectangle()
-                .stroke(.pixelInk.opacity(0.72), lineWidth: 2)
-        }
-    }
-
     private var historyFooter: some View {
         HStack {
             PixelSpeakerGrille()
@@ -3742,32 +3418,6 @@ private struct RecordingHistoryView: View {
         selectedRecordingIDs.removeAll()
         isSelectionMode = false
     }
-
-    private func shareSelectedRecordings() {
-        let selectedURLs = recorder.recordings
-            .filter { selectedRecordingIDs.contains($0.id) }
-            .map(\.url)
-
-        guard selectedURLs.isEmpty == false else {
-            return
-        }
-
-        shareURLs = selectedURLs
-        showingShareSheet = true
-    }
-}
-
-private struct SystemShareSheet: UIViewControllerRepresentable {
-    let activityItems: [Any]
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(
-            activityItems: activityItems,
-            applicationActivities: nil
-        )
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 private struct RecordingTagCloud: View {
