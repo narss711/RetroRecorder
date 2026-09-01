@@ -46,48 +46,61 @@ final class CloudSyncStore {
     static let shared = CloudSyncStore()
     static let containerIdentifier = "iCloud.com.lutan.RetroRecorder"
 
+    private static let cloudKitEnabledInfoKey = "RetroRecorderCloudKitEnabled"
+
     private let container: NSPersistentCloudKitContainer
     private let context: NSManagedObjectContext
+    private let cloudKitEnabled: Bool
     private var isReady = false
     private var remoteChangeObserver: NSObjectProtocol?
     private var pendingDeletedRecordIDs = Set<String>()
 
     private init() {
+        let cloudKitEnabled = Self.isCloudKitEnabledForCurrentBuild
+        self.cloudKitEnabled = cloudKitEnabled
+
         let model = Self.makeModel()
         container = NSPersistentCloudKitContainer(name: "RetroRecorderCloud", managedObjectModel: model)
 
         let storeDescription = container.persistentStoreDescriptions.first ?? NSPersistentStoreDescription()
-        let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        try? FileManager.default.createDirectory(at: supportDirectory, withIntermediateDirectories: true)
-        storeDescription.url = supportDirectory.appendingPathComponent("RetroRecorderCloud.sqlite")
-        storeDescription.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(
-            containerIdentifier: Self.containerIdentifier
-        )
-        storeDescription.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
-        storeDescription.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+        if cloudKitEnabled {
+            let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            try? FileManager.default.createDirectory(at: supportDirectory, withIntermediateDirectories: true)
+            storeDescription.url = supportDirectory.appendingPathComponent("RetroRecorderCloud.sqlite")
+            storeDescription.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(
+                containerIdentifier: Self.containerIdentifier
+            )
+            storeDescription.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+            storeDescription.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+        } else {
+            storeDescription.type = NSInMemoryStoreType
+            storeDescription.cloudKitContainerOptions = nil
+        }
         container.persistentStoreDescriptions = [storeDescription]
 
         context = container.viewContext
         context.automaticallyMergesChangesFromParent = true
         context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
 
-        remoteChangeObserver = NotificationCenter.default.addObserver(
-            forName: .NSPersistentStoreRemoteChange,
-            object: container.persistentStoreCoordinator,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self else { return }
-            self.isReady = true
-            NotificationCenter.default.post(name: .recordingCloudStoreDidChange, object: self)
+        if cloudKitEnabled {
+            remoteChangeObserver = NotificationCenter.default.addObserver(
+                forName: .NSPersistentStoreRemoteChange,
+                object: container.persistentStoreCoordinator,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self else { return }
+                self.isReady = true
+                NotificationCenter.default.post(name: .recordingCloudStoreDidChange, object: self)
+            }
         }
 
         container.loadPersistentStores { [weak self] _, error in
             DispatchQueue.main.async {
                 guard let self else { return }
-                self.isReady = error == nil
+                self.isReady = self.cloudKitEnabled && error == nil
                 if let error {
                     print("CloudKit store unavailable: \(error.localizedDescription)")
-                } else {
+                } else if self.cloudKitEnabled {
                     self.flushPendingDeletes()
                 }
                 NotificationCenter.default.post(name: .recordingCloudStoreDidChange, object: self)
@@ -99,6 +112,18 @@ final class CloudSyncStore {
         if let remoteChangeObserver {
             NotificationCenter.default.removeObserver(remoteChangeObserver)
         }
+    }
+
+    private static var isCloudKitEnabledForCurrentBuild: Bool {
+        if let value = Bundle.main.object(forInfoDictionaryKey: cloudKitEnabledInfoKey) as? Bool {
+            return value
+        }
+
+        guard let value = Bundle.main.object(forInfoDictionaryKey: cloudKitEnabledInfoKey) as? String else {
+            return false
+        }
+
+        return ["1", "true", "yes"].contains(value.lowercased())
     }
 
     func reconcile(localRecordings: [RecordingItem]) {

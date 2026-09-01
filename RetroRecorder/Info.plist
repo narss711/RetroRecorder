@@ -33,6 +33,8 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>需要访问麦克风来录制你的语音内容，这是录音功能得以实现的基础。</string>
+	<key>RetroRecorderCloudKitEnabled</key>
+	<string>$(RETRORECORDER_CLOUDKIT_ENABLED)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>用于在录音时自动记录所在地点，方便你日后按地点回顾和查找录音内容。</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
