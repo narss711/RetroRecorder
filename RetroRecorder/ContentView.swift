@@ -1406,11 +1406,12 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            if permissionOnboardingCompleted {
-                ZStack {
-                    AdaptiveAppBackground()
+            Group {
+                if permissionOnboardingCompleted {
+                    ZStack {
+                        AdaptiveAppBackground()
 
-                    GeometryReader { proxy in
+                        GeometryReader { proxy in
                         let isCompactHeight = proxy.size.height < 720
                         let surfaceHeight = max(0, proxy.size.height - 12)
                         let waveVisualHeight = min(
@@ -1474,15 +1475,16 @@ struct ContentView: View {
                             .padding(.horizontal, 7)
                             .padding(.vertical, 6)
                         }
+                        }
                     }
+                } else {
+                    PermissionOnboardingView(
+                        recorder: recorder,
+                        onComplete: {
+                            permissionOnboardingCompleted = true
+                        }
+                    )
                 }
-            } else {
-                PermissionOnboardingView(
-                    recorder: recorder,
-                    onComplete: {
-                        permissionOnboardingCompleted = true
-                    }
-                )
             }
             .recordingTagToast($tagToast)
             .animation(.easeOut(duration: 0.18), value: interfaceColorThemeRaw)
