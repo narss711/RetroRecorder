@@ -28,15 +28,6 @@ struct ToggleRecordingPauseIntent: LiveActivityIntent {
     }
 }
 
-struct StopRecordingIntent: LiveActivityIntent {
-    static var title: LocalizedStringResource = "停止录音"
-
-    func perform() async throws -> some IntentResult {
-        RecordingLiveActivityCommandStore.write(.stop)
-        return .result()
-    }
-}
-
 struct RecordingLiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: RecordingLiveActivityAttributes.self) { context in
@@ -57,11 +48,7 @@ struct RecordingLiveActivityWidget: Widget {
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
-                    HStack(spacing: 12) {
-                        RecordingLiveActivityCompactModeSummary(mode: context.attributes.mode)
-
-                        RecordingLiveActivityStopButton(compact: true)
-                    }
+                    RecordingLiveActivityCompactModeSummary(mode: context.attributes.mode)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                 }
@@ -93,8 +80,6 @@ private struct RecordingLiveActivityLockScreenView: View {
                     .minimumScaleFactor(0.72)
 
                 Spacer(minLength: 0)
-
-                RecordingLiveActivityStopButton()
             }
 
             RecordingLiveActivityModeSummary(mode: context.attributes.mode)
@@ -145,23 +130,6 @@ private struct RecordingLiveActivityElapsedText: View {
         .monospacedDigit()
         .contentTransition(.numericText(countsDown: false))
         .accessibilityLabel("当前录音时长")
-    }
-}
-
-private struct RecordingLiveActivityStopButton: View {
-    var compact = false
-
-    var body: some View {
-        Button(intent: StopRecordingIntent()) {
-            Label(compact ? "STOP" : "停止", systemImage: "stop.fill")
-                .font((compact ? Font.caption2 : Font.caption).weight(.heavy))
-                .foregroundStyle(.white)
-                .padding(.horizontal, compact ? 10 : 12)
-                .frame(height: compact ? 32 : 40)
-                .background(Color.red, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("停止录音")
     }
 }
 

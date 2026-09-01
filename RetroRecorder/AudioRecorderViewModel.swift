@@ -3,6 +3,7 @@ import AVFoundation
 import Accelerate
 import CoreLocation
 import Foundation
+import MediaPlayer
 import onnxruntime_objc
 
 enum NoiseReductionMode: String, CaseIterable, Identifiable {
@@ -471,6 +472,8 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
     private var player: AVAudioPlayer?
     private var meterTimer: Timer?
     private var playbackTimer: Timer?
+    private var playbackRemoteCommandTargets: [(command: MPRemoteCommand, token: Any)] = []
+    private var lastNowPlayingTime: TimeInterval = -1
     private var inputRefreshTimer: Timer?
     private var liveActivityCommandTimer: Timer?
     private var playbackSessionLeaseCount = 0
@@ -1069,6 +1072,7 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
 
             player = nextPlayer
             playingRecordingID = recording.id
+            installRemoteCommandHandlers(for: recording)
             updatePlaybackProgress()
             startPlaybackTimer()
         } catch {
@@ -1559,6 +1563,8 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         player = nil
         playingRecordingID = nil
         playbackElapsed = 0
+        removeRemoteCommandTargets()
+        clearNowPlayingInfo()
         refreshInputs(activateSession: playbackSessionLeaseCount == 0)
     }
 
@@ -1587,6 +1593,169 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         }
 
         playbackElapsed = min(max(0, player.currentTime), max(0, player.duration))
+        updateNowPlayingInfo()
+    }
+
+    private func installRemoteCommandHandlers(for recording: RecordingItem) {
+        removeRemoteCommandTargets()
+
+        let commandCenter = MPRemoteCommandCenter.shared()
+        commandCenter.playCommand.isEnabled = true
+        commandCenter.pauseCommand.isEnabled = true
+        commandCenter.togglePlayPauseCommand.isEnabled = true
+        commandCenter.skipBackwardCommand.isEnabled = true
+        commandCenter.skipBackwardCommand.preferredIntervals = [15]
+        commandCenter.skipForwardCommand.isEnabled = true
+        commandCenter.skipForwardCommand.preferredIntervals = [15]
+        commandCenter.changePlaybackPositionCommand.isEnabled = true
+
+        let playToken = commandCenter.playCommand.addTarget { [weak self] _ in
+            Task { @MainActor in
+                self?.playFromRemoteControl()
+            }
+            return .success
+        }
+        playbackRemoteCommandTargets.append((commandCenter.playCommand, playToken))
+
+        let pauseToken = commandCenter.pauseCommand.addTarget { [weak self] _ in
+            Task { @MainActor in
+                self?.pauseFromRemoteControl()
+            }
+            return .success
+        }
+        playbackRemoteCommandTargets.append((commandCenter.pauseCommand, pauseToken))
+
+        let toggleToken = commandCenter.togglePlayPauseCommand.addTarget { [weak self] _ in
+            Task { @MainActor in
+                self?.togglePlaybackFromRemoteControl()
+            }
+            return .success
+        }
+        playbackRemoteCommandTargets.append((commandCenter.togglePlayPauseCommand, toggleToken))
+
+        let backwardToken = commandCenter.skipBackwardCommand.addTarget { [weak self] _ in
+            Task { @MainActor in
+                self?.jumpPlayback(by: -15)
+            }
+            return .success
+        }
+        playbackRemoteCommandTargets.append((commandCenter.skipBackwardCommand, backwardToken))
+
+        let forwardToken = commandCenter.skipForwardCommand.addTarget { [weak self] _ in
+            Task { @MainActor in
+                self?.jumpPlayback(by: 15)
+            }
+            return .success
+        }
+        playbackRemoteCommandTargets.append((commandCenter.skipForwardCommand, forwardToken))
+
+        let positionToken = commandCenter.changePlaybackPositionCommand.addTarget { [weak self] event in
+            guard let positionEvent = event as? MPChangePlaybackPositionCommandEvent else {
+                return .commandFailed
+            }
+
+            Task { @MainActor in
+                self?.seekPlayback(to: positionEvent.positionTime)
+            }
+            return .success
+        }
+        playbackRemoteCommandTargets.append((commandCenter.changePlaybackPositionCommand, positionToken))
+
+        updateNowPlayingInfo(for: recording, force: true)
+    }
+
+    private func removeRemoteCommandTargets() {
+        for target in playbackRemoteCommandTargets {
+            target.command.removeTarget(target.token)
+        }
+        playbackRemoteCommandTargets.removeAll()
+
+        let commandCenter = MPRemoteCommandCenter.shared()
+        commandCenter.playCommand.isEnabled = false
+        commandCenter.pauseCommand.isEnabled = false
+        commandCenter.togglePlayPauseCommand.isEnabled = false
+        commandCenter.skipBackwardCommand.isEnabled = false
+        commandCenter.skipForwardCommand.isEnabled = false
+        commandCenter.changePlaybackPositionCommand.isEnabled = false
+    }
+
+    private func playFromRemoteControl() {
+        guard let player, !player.isPlaying else {
+            return
+        }
+
+        if player.currentTime >= player.duration {
+            player.currentTime = 0
+            playbackElapsed = 0
+        }
+        player.play()
+        startPlaybackTimer()
+        updateNowPlayingInfo(force: true)
+    }
+
+    private func pauseFromRemoteControl() {
+        guard let player, player.isPlaying else {
+            return
+        }
+
+        player.pause()
+        stopPlaybackTimer()
+        updateNowPlayingInfo(force: true)
+    }
+
+    private func togglePlaybackFromRemoteControl() {
+        if player?.isPlaying == true {
+            pauseFromRemoteControl()
+        } else {
+            playFromRemoteControl()
+        }
+    }
+
+    private func jumpPlayback(by seconds: TimeInterval) {
+        guard let player else {
+            return
+        }
+
+        player.currentTime = min(max(0, player.currentTime + seconds), max(0, player.duration))
+        updatePlaybackProgress()
+        updateNowPlayingInfo(force: true)
+    }
+
+    private func seekPlayback(to time: TimeInterval) {
+        guard let player else {
+            return
+        }
+
+        player.currentTime = min(max(0, time), max(0, player.duration))
+        updatePlaybackProgress()
+        updateNowPlayingInfo(force: true)
+    }
+
+    private func updateNowPlayingInfo(for recording: RecordingItem? = nil, force: Bool = false) {
+        guard let player, let playingRecordingID,
+              let activeRecording = recording ?? recordings.first(where: { $0.id == playingRecordingID }) else {
+            return
+        }
+
+        let time = min(max(0, player.currentTime), max(0, player.duration))
+        guard force || abs(time - lastNowPlayingTime) >= 0.25 else {
+            return
+        }
+
+        lastNowPlayingTime = time
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = [
+            MPMediaItemPropertyTitle: activeRecording.title,
+            MPMediaItemPropertyArtist: "RetroRecorder",
+            MPMediaItemPropertyPlaybackDuration: player.duration,
+            MPNowPlayingInfoPropertyElapsedPlaybackTime: time,
+            MPNowPlayingInfoPropertyPlaybackRate: player.isPlaying ? player.rate : 0,
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: player.rate
+        ]
+    }
+
+    private func clearNowPlayingInfo() {
+        lastNowPlayingTime = -1
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
 
     private func startInputRefreshTimer() {
@@ -1779,6 +1948,8 @@ extension AudioRecorderViewModel: AVAudioPlayerDelegate {
             self.playingRecordingID = nil
             self.player = nil
             self.playbackElapsed = 0
+            self.removeRemoteCommandTargets()
+            self.clearNowPlayingInfo()
             self.refreshInputs()
         }
     }
