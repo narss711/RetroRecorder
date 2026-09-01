@@ -4250,20 +4250,20 @@ private struct AppLanguagePickerView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             sectionHeader(appLanguage.text(.appLanguage))
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 10)], spacing: 10) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 124), spacing: 8)], spacing: 8) {
                 ForEach(AppLanguage.allCases) { language in
                     Button {
                         selectedRawValue = language.rawValue
                     } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 6) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 5) {
                                 Text(language.title(displayLanguage: appLanguage))
-                                    .retroFont(size: 15, weight: .black)
+                                    .retroFont(size: 13, weight: .black)
                                     .lineLimit(1)
-                                    .minimumScaleFactor(0.72)
+                                    .minimumScaleFactor(0.68)
 
                                 Spacer(minLength: 2)
 
@@ -4272,15 +4272,15 @@ private struct AppLanguagePickerView: View {
                             }
 
                             Text(language.subtitle(displayLanguage: appLanguage))
-                                .retroFont(size: 11, weight: .semibold)
+                                .retroFont(size: 9, weight: .semibold)
                                 .foregroundStyle(.pixelInk.opacity(0.54))
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.72)
+                                .minimumScaleFactor(0.66)
                         }
                         .foregroundStyle(.pixelInk)
-                        .padding(.horizontal, 11)
-                        .padding(.vertical, 10)
-                        .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 7)
+                        .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
                         .background(Color.pixelPanel.opacity(language == selectedLanguage ? 0.78 : 0.38), in: PixelCornerShape(cornerRadius: 6))
                         .overlay {
                             PixelCornerShape(cornerRadius: 6)
