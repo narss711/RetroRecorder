@@ -1116,8 +1116,6 @@ extension EchoCancellationMode {
             return "speaker.slash"
         case .voiceProcessing:
             return "speaker.wave.2.bubble"
-        case .speexDSP:
-            return "waveform.badge.magnifyingglass"
         }
     }
 
@@ -1151,8 +1149,6 @@ extension EchoCancellationMode {
                 german: "System-AEC",
                 french: "AEC système"
             )
-        case .speexDSP:
-            return "SpeexDSP AEC"
         }
     }
 
@@ -1185,20 +1181,6 @@ extension EchoCancellationMode {
                 japanese: "iOS Voice Processing を使用",
                 german: "Nutzt iOS Voice Processing",
                 french: "Utilise Voice Processing iOS"
-            )
-        case .speexDSP:
-            return localizedTitle(
-                language: language,
-                zhHans: "需扬声器参考流",
-                zhHant: "需喇叭參考流",
-                english: "Needs playback reference",
-                spanish: "Requiere referencia",
-                arabic: "يتطلب مرجع تشغيل",
-                portuguese: "Requer referência",
-                russian: "Нужен опорный звук",
-                japanese: "再生参照が必要",
-                german: "Benötigt Playback-Referenz",
-                french: "Référence requise"
             )
         }
     }

@@ -43,17 +43,11 @@ enum NoiseReductionMode: String, CaseIterable, Identifiable {
 enum EchoCancellationMode: String, CaseIterable, Identifiable {
     case off
     case voiceProcessing
-    case speexDSP
 
     var id: String { rawValue }
 
     var isAvailable: Bool {
-        switch self {
-        case .off, .voiceProcessing:
-            return true
-        case .speexDSP:
-            return false
-        }
+        true
     }
 }
 
@@ -648,8 +642,6 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
             return "Off"
         case .voiceProcessing:
             return "Voice Processing"
-        case .speexDSP:
-            return "SpeexDSP"
         }
     }
 
