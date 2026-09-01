@@ -86,9 +86,12 @@ struct RecordingPlaybackView: View {
                         tagSeconds: sortedTagSeconds,
                         selectedTagSecond: selectedTagSecond,
                         hasCurrentTag: hasCurrentTag,
+                        outputMode: playback.outputMode,
+                        outputOptions: playback.outputOptions,
                         speedOptions: speedOptions,
                         onSeek: playback.seek,
                         onSelectRate: playback.setRate,
+                        onSelectOutput: playback.setOutputMode,
                         onJumpBackward: { playback.jump(by: -15) },
                         onTogglePlay: playback.togglePlayback,
                         onJumpForward: { playback.jump(by: 15) },
@@ -896,14 +899,18 @@ private final class RecordingPlaybackController: NSObject, ObservableObject {
     @Published var currentTime: TimeInterval = 0
     @Published var duration: TimeInterval
     @Published var rate = 1.0
+    @Published var outputMode: PlaybackOutputMode = .speaker
+    @Published var outputOptions: [PlaybackOutputMode] = [.speaker, .receiver]
     @Published var waveformSamples: [Double] = Array(repeating: 0, count: 720)
     @Published var errorMessage: String?
 
     private let recording: RecordingItem
     private var player: AVPlayer?
     private var endObserver: NSObjectProtocol?
+    private var routeObserver: NSObjectProtocol?
     private var timer: Timer?
     private var didLoadWaveform = false
+    private var hasBluetoothOutput = false
 
     init(recording: RecordingItem) {
         self.recording = recording
@@ -916,6 +923,9 @@ private final class RecordingPlaybackController: NSObject, ObservableObject {
         if let endObserver {
             NotificationCenter.default.removeObserver(endObserver)
         }
+        if let routeObserver {
+            NotificationCenter.default.removeObserver(routeObserver)
+        }
         player?.pause()
     }
 
@@ -925,8 +935,20 @@ private final class RecordingPlaybackController: NSObject, ObservableObject {
         }
 
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
+            let session = AVAudioSession.sharedInstance()
+            // Let iOS resolve a connected Bluetooth output first, then fall
+            // back to the built-in speaker when no Bluetooth route exists.
+            try session.setCategory(.playback, mode: .default, options: [.allowBluetoothA2DP])
+            try session.setActive(true)
+            hasBluetoothOutput = containsBluetoothOutput(session.currentRoute.outputs)
+            outputOptions = hasBluetoothOutput
+                ? [.speaker, .receiver, .bluetooth]
+                : [.speaker, .receiver]
+            outputMode = hasBluetoothOutput ? .bluetooth : .speaker
+            if hasBluetoothOutput == false {
+                try configureAudioSession(for: .speaker)
+            }
+            installRouteObserver()
 
             let playerItem = AVPlayerItem(url: recording.url)
             playerItem.audioTimePitchAlgorithm = .timeDomain
@@ -937,6 +959,19 @@ private final class RecordingPlaybackController: NSObject, ObservableObject {
             duration = recording.duration
             installEndObserver(for: playerItem)
             loadWaveformIfNeeded()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func setOutputMode(_ mode: PlaybackOutputMode) {
+        guard outputOptions.contains(mode) else {
+            return
+        }
+
+        do {
+            try configureAudioSession(for: mode)
+            outputMode = mode
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -1010,6 +1045,73 @@ private final class RecordingPlaybackController: NSObject, ObservableObject {
         if let endObserver {
             NotificationCenter.default.removeObserver(endObserver)
             self.endObserver = nil
+        }
+        if let routeObserver {
+            NotificationCenter.default.removeObserver(routeObserver)
+            self.routeObserver = nil
+        }
+    }
+
+    private func configureAudioSession(for mode: PlaybackOutputMode) throws {
+        let session = AVAudioSession.sharedInstance()
+
+        switch mode {
+        case .bluetooth:
+            try session.setCategory(.playback, mode: .default, options: [.allowBluetoothA2DP])
+            try session.setActive(true)
+        case .speaker, .receiver:
+            let options: AVAudioSession.CategoryOptions = mode == .speaker
+                ? [.defaultToSpeaker]
+                : []
+            try session.setCategory(
+                .playAndRecord,
+                mode: .default,
+                options: options
+            )
+            try session.setActive(true)
+            try session.overrideOutputAudioPort(mode == .speaker ? .speaker : .none)
+        }
+    }
+
+    private func installRouteObserver() {
+        guard routeObserver == nil else {
+            return
+        }
+
+        routeObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            Task { @MainActor in
+                self?.handleRouteChange(notification)
+            }
+        }
+    }
+
+    private func handleRouteChange(_ notification: Notification) {
+        let session = AVAudioSession.sharedInstance()
+        let isBluetoothRoute = containsBluetoothOutput(session.currentRoute.outputs)
+
+        if isBluetoothRoute {
+            hasBluetoothOutput = true
+            outputOptions = [.speaker, .receiver, .bluetooth]
+            if outputMode == .speaker || outputMode == .receiver {
+                return
+            }
+        } else if outputMode == .bluetooth {
+            hasBluetoothOutput = false
+            outputOptions = [.speaker, .receiver]
+            outputMode = .speaker
+            try? configureAudioSession(for: .speaker)
+        }
+    }
+
+    private func containsBluetoothOutput(_ outputs: [AVAudioSessionPortDescription]) -> Bool {
+        outputs.contains { output in
+            output.portType == .bluetoothA2DP
+                || output.portType == .bluetoothHFP
+                || output.portType == .bluetoothLE
         }
     }
 
@@ -1537,9 +1639,12 @@ private struct PlaybackControlArea: View {
     let tagSeconds: [Int]
     let selectedTagSecond: Int?
     let hasCurrentTag: Bool
+    let outputMode: PlaybackOutputMode
+    let outputOptions: [PlaybackOutputMode]
     let speedOptions: [Double]
     let onSeek: (TimeInterval) -> Void
     let onSelectRate: (Double) -> Void
+    let onSelectOutput: (PlaybackOutputMode) -> Void
     let onJumpBackward: () -> Void
     let onTogglePlay: () -> Void
     let onJumpForward: () -> Void
@@ -1556,19 +1661,23 @@ private struct PlaybackControlArea: View {
             )
             .frame(height: 24)
 
-            HStack(alignment: .firstTextBaseline) {
+            ZStack {
+                HStack(alignment: .center) {
+                    outputButton
+
+                    Spacer()
+
+                    Text("- \(RecordingItem.format(max(0, duration - currentTime)))")
+                        .retroFont(size: 15, weight: .bold, design: .monospaced)
+                        .foregroundStyle(.pixelInk.opacity(0.88))
+                        .lineLimit(1)
+                }
+
                 Text(RecordingItem.format(currentTime))
                     .retroFont(size: 27, weight: .black, design: .monospaced)
                     .foregroundStyle(.pixelInk)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
-
-                Spacer()
-
-                Text("- \(RecordingItem.format(max(0, duration - currentTime)))")
-                    .retroFont(size: 15, weight: .bold, design: .monospaced)
-                    .foregroundStyle(.pixelInk.opacity(0.88))
-                    .lineLimit(1)
             }
 
             HStack(spacing: 18) {
@@ -1619,6 +1728,30 @@ private struct PlaybackControlArea: View {
         .buttonStyle(.plain)
     }
 
+    private var outputButton: some View {
+        Menu {
+            ForEach(outputOptions) { option in
+                Button {
+                    onSelectOutput(option)
+                } label: {
+                    Label {
+                        Text(option.title)
+                    } icon: {
+                        Image(systemName: option.iconName)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: outputMode.iconName)
+                .font(.system(size: 20, weight: .black))
+                .foregroundStyle(.pixelInk)
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("回放声音输出")
+        .accessibilityValue(outputMode.title)
+    }
+
     private func playbackButton(systemName: String, size: CGFloat, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
@@ -1631,6 +1764,36 @@ private struct PlaybackControlArea: View {
 
     private func speedTitle(_ value: Double) -> String {
         value == 1 ? "1.0" : String(format: "%g", value)
+    }
+}
+
+private enum PlaybackOutputMode: String, CaseIterable, Identifiable {
+    case speaker
+    case receiver
+    case bluetooth
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .speaker:
+            return "手机外放"
+        case .receiver:
+            return "手机听筒"
+        case .bluetooth:
+            return "蓝牙耳机"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .speaker:
+            return "speaker.wave.2.fill"
+        case .receiver:
+            return "phone.fill"
+        case .bluetooth:
+            return "airpodspro"
+        }
     }
 }
 
