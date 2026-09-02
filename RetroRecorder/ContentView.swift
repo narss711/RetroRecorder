@@ -438,6 +438,7 @@ enum AppCopy: Hashable {
     case selectedCountFormat
     case history
     case characterCountFormat
+    case noTranscript
     case appLanguage
     case transcriptionModel
     case followSystem
@@ -538,6 +539,8 @@ extension AppCopy {
             return "历史录音"
         case .characterCountFormat:
             return "%d 字"
+        case .noTranscript:
+            return "暂无转写文本"
         case .appLanguage:
             return "APP 语言"
         case .transcriptionModel:
@@ -685,6 +688,8 @@ extension AppCopy {
             return "History"
         case .characterCountFormat:
             return "%d chars"
+        case .noTranscript:
+            return "No transcript available"
         case .appLanguage:
             return "App Language"
         case .transcriptionModel:
@@ -810,6 +815,7 @@ private extension AppCopy {
             .selectedCountFormat: "已選擇 %d 筆",
             .history: "歷史錄音",
             .characterCountFormat: "%d 字",
+            .noTranscript: "暫無轉寫文字",
             .appLanguage: "APP 語言",
             .transcriptionModel: "語音識別模型",
             .followSystem: "跟隨系統",
@@ -878,6 +884,7 @@ private extension AppCopy {
             .selectedCountFormat: "%d seleccionadas",
             .history: "Historial",
             .characterCountFormat: "%d caracteres",
+            .noTranscript: "No hay transcripción",
             .appLanguage: "Idioma de la app",
             .transcriptionModel: "Modelo de voz",
             .followSystem: "Seguir sistema",
@@ -942,6 +949,7 @@ private extension AppCopy {
             .selectedCountFormat: "تم تحديد %d",
             .history: "السجل",
             .characterCountFormat: "%d حرف",
+            .noTranscript: "لا يوجد نص مكتوب",
             .appLanguage: "لغة التطبيق",
             .transcriptionModel: "نموذج الكلام",
             .followSystem: "اتباع النظام",
@@ -1006,6 +1014,7 @@ private extension AppCopy {
             .selectedCountFormat: "%d selecionadas",
             .history: "Histórico",
             .characterCountFormat: "%d caracteres",
+            .noTranscript: "Nenhuma transcrição disponível",
             .appLanguage: "Idioma do app",
             .transcriptionModel: "Modelo de fala",
             .followSystem: "Seguir sistema",
@@ -1070,6 +1079,7 @@ private extension AppCopy {
             .selectedCountFormat: "Выбрано: %d",
             .history: "История",
             .characterCountFormat: "%d симв.",
+            .noTranscript: "Текст отсутствует",
             .appLanguage: "Язык приложения",
             .transcriptionModel: "Модель речи",
             .followSystem: "Как в системе",
@@ -1134,6 +1144,7 @@ private extension AppCopy {
             .selectedCountFormat: "%d 件選択中",
             .history: "履歴",
             .characterCountFormat: "%d 文字",
+            .noTranscript: "文字起こしはありません",
             .appLanguage: "アプリ言語",
             .transcriptionModel: "音声モデル",
             .followSystem: "システムに従う",
@@ -1198,6 +1209,7 @@ private extension AppCopy {
             .selectedCountFormat: "%d ausgewählt",
             .history: "Verlauf",
             .characterCountFormat: "%d Zeichen",
+            .noTranscript: "Kein Transkript verfügbar",
             .appLanguage: "App-Sprache",
             .transcriptionModel: "Sprachmodell",
             .followSystem: "System folgen",
@@ -1262,6 +1274,7 @@ private extension AppCopy {
             .selectedCountFormat: "%d sélectionnés",
             .history: "Historique",
             .characterCountFormat: "%d caractères",
+            .noTranscript: "Aucune transcription disponible",
             .appLanguage: "Langue de l’app",
             .transcriptionModel: "Modèle vocal",
             .followSystem: "Suivre le système",
