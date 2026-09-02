@@ -4,8 +4,8 @@ import SwiftUI
 
 struct RecordingPlaybackView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.appLanguage) private var appLanguage
     @Environment(\.interfaceRetroFont) private var interfaceRetroFont
+    @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
     @ObservedObject private var recorder: AudioRecorderViewModel
     @StateObject private var playback: RecordingPlaybackController
 
@@ -29,6 +29,10 @@ struct RecordingPlaybackView: View {
     @FocusState private var isTitleFocused: Bool
 
     private let speedOptions = [0.25, 0.5, 1.0, 1.5, 2.0]
+
+    private var appLanguage: AppLanguage {
+        AppLanguage.value(for: appLanguageRaw)
+    }
 
     init(recording: RecordingItem, recorder: AudioRecorderViewModel) {
         self.recording = recording
@@ -180,6 +184,8 @@ struct RecordingPlaybackView: View {
                     discardSilenceRemoval(result)
                 }
             )
+            .environment(\.appLanguage, appLanguage)
+            .environment(\.layoutDirection, appLanguage.layoutDirection)
         }
         .recordingTagToast($tagToast)
         .environment(\.font, interfaceRetroFont.font(size: 15, weight: .regular))
