@@ -32,6 +32,8 @@ struct RecordingLiveActivityAttributes: ActivityAttributes {
 
     var recordingID: String
     var title: String
+    var recordingStatusTitle: String
+    var pausedStatusTitle: String
     var mode: RecordingLiveActivityMode
 
     static func formatElapsed(_ interval: TimeInterval) -> String {

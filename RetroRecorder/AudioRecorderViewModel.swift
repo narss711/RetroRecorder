@@ -1380,6 +1380,13 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         }
     }
 
+    private var liveActivityAppLanguage: AppLanguage {
+        AppLanguage.value(
+            for: UserDefaults.standard.string(forKey: AppLanguage.storageKey)
+                ?? AppLanguage.system.rawValue
+        )
+    }
+
     private func startRecordingLiveActivity(recordingURL: URL) async {
         RecordingLiveActivityCommandStore.clearPendingCommand()
         liveActivityStatusText = "Live Activity 启动中"
@@ -1401,6 +1408,8 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         let attributes = RecordingLiveActivityAttributes(
             recordingID: recordingURL.lastPathComponent,
             title: recordingURL.deletingPathExtension().lastPathComponent,
+            recordingStatusTitle: liveActivityAppLanguage.text(.recordingInProgress),
+            pausedStatusTitle: liveActivityAppLanguage.text(.recordingPaused),
             mode: RecordingLiveActivityMode(
                 inputName: liveActivityInputName,
                 fileFormat: recordingFileFormat.title,

@@ -474,6 +474,8 @@ enum AppCopy: Hashable {
     case liveText
     case liveTextPlaceholder
     case startRec
+    case recordingInProgress
+    case recordingPaused
     case removeSilence
     case removingSilence
     case removeSilenceProcessingDetail
@@ -608,6 +610,10 @@ extension AppCopy {
             return "正在识别语音输入..."
         case .startRec:
             return "开始录制"
+        case .recordingInProgress:
+            return "录音中"
+        case .recordingPaused:
+            return "录音已暂停"
         case .removeSilence:
             return "删除空白"
         case .removingSilence:
@@ -751,6 +757,10 @@ extension AppCopy {
             return "Listening for speech..."
         case .startRec:
             return "Start Rec"
+        case .recordingInProgress:
+            return "Recording"
+        case .recordingPaused:
+            return "Recording Paused"
         case .removeSilence:
             return "Remove Silence"
         case .removingSilence:
@@ -828,6 +838,8 @@ private extension AppCopy {
             .liveText: "即時文字",
             .liveTextPlaceholder: "正在識別語音輸入...",
             .startRec: "開始錄製",
+            .recordingInProgress: "錄音中",
+            .recordingPaused: "錄音已暫停",
             .removeSilence: "刪除空白",
             .removingSilence: "正在刪除空白",
             .removeSilenceProcessingDetail: "正在分析並串接有效音訊",
@@ -890,6 +902,8 @@ private extension AppCopy {
             .liveText: "Texto en vivo",
             .liveTextPlaceholder: "Escuchando voz...",
             .startRec: "Iniciar",
+            .recordingInProgress: "Grabando",
+            .recordingPaused: "Grabación en pausa",
             .removeSilence: "Quitar silencios",
             .removingSilence: "Quitando silencios",
             .removeSilenceProcessingDetail: "Analizando y uniendo el audio audible",
@@ -952,6 +966,8 @@ private extension AppCopy {
             .liveText: "نص مباشر",
             .liveTextPlaceholder: "جار الاستماع للصوت...",
             .startRec: "بدء التسجيل",
+            .recordingInProgress: "جارٍ التسجيل",
+            .recordingPaused: "التسجيل متوقف مؤقتًا",
             .removeSilence: "إزالة الصمت",
             .removingSilence: "تتم إزالة الصمت",
             .removeSilenceProcessingDetail: "جار تحليل ودمج الصوت المسموع",
@@ -1014,6 +1030,8 @@ private extension AppCopy {
             .liveText: "Texto ao vivo",
             .liveTextPlaceholder: "Ouvindo fala...",
             .startRec: "Iniciar",
+            .recordingInProgress: "Gravando",
+            .recordingPaused: "Gravação pausada",
             .removeSilence: "Remover silêncios",
             .removingSilence: "Removendo silêncios",
             .removeSilenceProcessingDetail: "Analisando e unindo o áudio audível",
@@ -1076,6 +1094,8 @@ private extension AppCopy {
             .liveText: "Живой текст",
             .liveTextPlaceholder: "Слушаю речь...",
             .startRec: "Начать",
+            .recordingInProgress: "Идёт запись",
+            .recordingPaused: "Запись приостановлена",
             .removeSilence: "Удалить тишину",
             .removingSilence: "Удаление тишины",
             .removeSilenceProcessingDetail: "Анализ и объединение слышимого аудио",
@@ -1138,6 +1158,8 @@ private extension AppCopy {
             .liveText: "ライブテキスト",
             .liveTextPlaceholder: "音声を認識中...",
             .startRec: "録音開始",
+            .recordingInProgress: "録音中",
+            .recordingPaused: "録音を一時停止中",
             .removeSilence: "無音を削除",
             .removingSilence: "無音を削除中",
             .removeSilenceProcessingDetail: "有効な音声を解析・結合中",
@@ -1200,6 +1222,8 @@ private extension AppCopy {
             .liveText: "Live-Text",
             .liveTextPlaceholder: "Sprache wird erkannt...",
             .startRec: "Start",
+            .recordingInProgress: "Aufnahme läuft",
+            .recordingPaused: "Aufnahme pausiert",
             .removeSilence: "Stille entfernen",
             .removingSilence: "Stille wird entfernt",
             .removeSilenceProcessingDetail: "Hörbares Audio wird analysiert und verbunden",
@@ -1262,6 +1286,8 @@ private extension AppCopy {
             .liveText: "Texte en direct",
             .liveTextPlaceholder: "Écoute de la parole...",
             .startRec: "Démarrer",
+            .recordingInProgress: "Enregistrement en cours",
+            .recordingPaused: "Enregistrement en pause",
             .removeSilence: "Supprimer les silences",
             .removingSilence: "Suppression des silences",
             .removeSilenceProcessingDetail: "Analyse et assemblage de l’audio audible",

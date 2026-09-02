@@ -101,7 +101,10 @@ private struct RecordingLiveActivityStatus: View {
                 .font(.system(size: 20, weight: .semibold))
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(context.state.isPaused ? "录音已暂停" : "录音中")
+                Text(context.state.isPaused
+                    ? context.attributes.pausedStatusTitle
+                    : context.attributes.recordingStatusTitle
+                )
                     .font(.subheadline.weight(.heavy))
                     .lineLimit(1)
 
