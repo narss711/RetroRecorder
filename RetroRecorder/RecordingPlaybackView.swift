@@ -118,8 +118,8 @@ struct RecordingPlaybackView: View {
 
                 if isPlaybackInteractionLocked {
                     PlaybackProcessingOverlay(
-                        title: isRetranscribingCurrentRecording ? "正在重新识别文字" : "正在删除空白",
-                        detail: isRetranscribingCurrentRecording ? "处理完成后会显示差异确认" : "正在分析并拼接有效音频",
+                        title: isRetranscribingCurrentRecording ? "正在重新识别文字" : appLanguage.text(.removingSilence),
+                        detail: isRetranscribingCurrentRecording ? "处理完成后会显示差异确认" : appLanguage.text(.removeSilenceProcessingDetail),
                         progress: isRetranscribingCurrentRecording ? max(0.06, retranscriptionProgress) : nil
                     )
                 }
@@ -343,7 +343,7 @@ struct RecordingPlaybackView: View {
                             .font(.system(size: 13, weight: .black))
                     }
 
-                    Text("删除空白")
+                    Text(appLanguage.text(.removeSilence))
                         .retroFont(size: 12, weight: .black, design: .rounded)
                 }
                 .frame(height: 32)
@@ -770,6 +770,7 @@ private struct TranscriptDiffReviewSheet: View {
 
 private struct SilenceRemovalReviewSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appLanguage) private var appLanguage
     @Environment(\.interfaceRetroFont) private var interfaceRetroFont
     @State private var titleText: String
     @State private var didFinish = false
@@ -793,15 +794,18 @@ private struct SilenceRemovalReviewSheet: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 12) {
-                    statisticRow(title: "缩减空白时长", value: RecordingItem.format(result.removedDuration))
-                    statisticRow(title: "检测到空白段", value: "\(result.removedSegmentCount) 个")
-                    statisticRow(title: "处理后时长", value: RecordingItem.format(result.outputDuration))
+                    statisticRow(title: appLanguage.text(.silenceReducedDuration), value: RecordingItem.format(result.removedDuration))
+                    statisticRow(
+                        title: appLanguage.text(.silenceSegmentsDetected),
+                        value: "\(result.removedSegmentCount)"
+                    )
+                    statisticRow(title: appLanguage.text(.silenceProcessedDuration), value: RecordingItem.format(result.outputDuration))
                 }
                 .padding(16)
                 .background(Color.pixelPanel.opacity(0.62), in: PixelCornerShape(cornerRadius: 6))
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("另存为文件名")
+                    Text(appLanguage.text(.saveAsFilename))
                         .retroFont(size: 13, weight: .black, design: .rounded)
                         .foregroundStyle(.pixelInk.opacity(0.62))
 
@@ -821,7 +825,7 @@ private struct SilenceRemovalReviewSheet: View {
             }
             .padding(18)
             .background(Color.pixelPaper.ignoresSafeArea())
-            .navigationTitle("删除空白")
+            .navigationTitle(appLanguage.text(.removeSilence))
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .bottom) {
                 HStack(spacing: 12) {
@@ -830,7 +834,7 @@ private struct SilenceRemovalReviewSheet: View {
                         onDiscard()
                         dismiss()
                     } label: {
-                        Text("放弃")
+                        Text(appLanguage.text(.discard))
                             .retroFont(size: 15, weight: .black, design: .rounded)
                             .frame(maxWidth: .infinity)
                             .frame(height: 46)
@@ -844,7 +848,7 @@ private struct SilenceRemovalReviewSheet: View {
                         onSave(cleanTitle)
                         dismiss()
                     } label: {
-                        Text("确认另存")
+                        Text(appLanguage.text(.confirmSaveAs))
                             .retroFont(size: 15, weight: .black, design: .rounded)
                             .frame(maxWidth: .infinity)
                             .frame(height: 46)

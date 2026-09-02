@@ -474,6 +474,15 @@ enum AppCopy: Hashable {
     case liveText
     case liveTextPlaceholder
     case startRec
+    case removeSilence
+    case removingSilence
+    case removeSilenceProcessingDetail
+    case silenceReducedDuration
+    case silenceSegmentsDetected
+    case silenceProcessedDuration
+    case saveAsFilename
+    case discard
+    case confirmSaveAs
 }
 
 extension AppCopy {
@@ -599,6 +608,24 @@ extension AppCopy {
             return "正在识别语音输入..."
         case .startRec:
             return "开始录制"
+        case .removeSilence:
+            return "删除空白"
+        case .removingSilence:
+            return "正在删除空白"
+        case .removeSilenceProcessingDetail:
+            return "正在分析并拼接有效音频"
+        case .silenceReducedDuration:
+            return "缩减空白时长"
+        case .silenceSegmentsDetected:
+            return "检测到空白段"
+        case .silenceProcessedDuration:
+            return "处理后时长"
+        case .saveAsFilename:
+            return "另存为文件名"
+        case .discard:
+            return "放弃"
+        case .confirmSaveAs:
+            return "确认另存"
         }
     }
 
@@ -724,6 +751,24 @@ extension AppCopy {
             return "Listening for speech..."
         case .startRec:
             return "Start Rec"
+        case .removeSilence:
+            return "Remove Silence"
+        case .removingSilence:
+            return "Removing Silence"
+        case .removeSilenceProcessingDetail:
+            return "Analyzing and joining audible audio"
+        case .silenceReducedDuration:
+            return "Silence Removed"
+        case .silenceSegmentsDetected:
+            return "Silent Segments Detected"
+        case .silenceProcessedDuration:
+            return "Processed Duration"
+        case .saveAsFilename:
+            return "Save As Filename"
+        case .discard:
+            return "Discard"
+        case .confirmSaveAs:
+            return "Save Copy"
         }
     }
 }
@@ -782,7 +827,16 @@ private extension AppCopy {
             .share: "分享",
             .liveText: "即時文字",
             .liveTextPlaceholder: "正在識別語音輸入...",
-            .startRec: "開始錄製"
+            .startRec: "開始錄製",
+            .removeSilence: "刪除空白",
+            .removingSilence: "正在刪除空白",
+            .removeSilenceProcessingDetail: "正在分析並串接有效音訊",
+            .silenceReducedDuration: "縮減空白時長",
+            .silenceSegmentsDetected: "偵測到空白段",
+            .silenceProcessedDuration: "處理後時長",
+            .saveAsFilename: "另存為檔案名稱",
+            .discard: "放棄",
+            .confirmSaveAs: "確認另存"
         ])
     }
 
@@ -835,7 +889,16 @@ private extension AppCopy {
             .share: "Compartir",
             .liveText: "Texto en vivo",
             .liveTextPlaceholder: "Escuchando voz...",
-            .startRec: "Iniciar"
+            .startRec: "Iniciar",
+            .removeSilence: "Quitar silencios",
+            .removingSilence: "Quitando silencios",
+            .removeSilenceProcessingDetail: "Analizando y uniendo el audio audible",
+            .silenceReducedDuration: "Silencio eliminado",
+            .silenceSegmentsDetected: "Segmentos silenciosos detectados",
+            .silenceProcessedDuration: "Duración procesada",
+            .saveAsFilename: "Guardar con nombre",
+            .discard: "Descartar",
+            .confirmSaveAs: "Guardar copia"
         ])
     }
 
@@ -888,7 +951,16 @@ private extension AppCopy {
             .share: "مشاركة",
             .liveText: "نص مباشر",
             .liveTextPlaceholder: "جار الاستماع للصوت...",
-            .startRec: "بدء التسجيل"
+            .startRec: "بدء التسجيل",
+            .removeSilence: "إزالة الصمت",
+            .removingSilence: "تتم إزالة الصمت",
+            .removeSilenceProcessingDetail: "جار تحليل ودمج الصوت المسموع",
+            .silenceReducedDuration: "الصمت المُزال",
+            .silenceSegmentsDetected: "المقاطع الصامتة المكتشفة",
+            .silenceProcessedDuration: "المدة بعد المعالجة",
+            .saveAsFilename: "حفظ باسم",
+            .discard: "تجاهل",
+            .confirmSaveAs: "حفظ نسخة"
         ])
     }
 
@@ -941,7 +1013,16 @@ private extension AppCopy {
             .share: "Compartilhar",
             .liveText: "Texto ao vivo",
             .liveTextPlaceholder: "Ouvindo fala...",
-            .startRec: "Iniciar"
+            .startRec: "Iniciar",
+            .removeSilence: "Remover silêncios",
+            .removingSilence: "Removendo silêncios",
+            .removeSilenceProcessingDetail: "Analisando e unindo o áudio audível",
+            .silenceReducedDuration: "Silêncio removido",
+            .silenceSegmentsDetected: "Trechos silenciosos detectados",
+            .silenceProcessedDuration: "Duração processada",
+            .saveAsFilename: "Salvar como",
+            .discard: "Descartar",
+            .confirmSaveAs: "Salvar cópia"
         ])
     }
 
@@ -994,7 +1075,16 @@ private extension AppCopy {
             .share: "Поделиться",
             .liveText: "Живой текст",
             .liveTextPlaceholder: "Слушаю речь...",
-            .startRec: "Начать"
+            .startRec: "Начать",
+            .removeSilence: "Удалить тишину",
+            .removingSilence: "Удаление тишины",
+            .removeSilenceProcessingDetail: "Анализ и объединение слышимого аудио",
+            .silenceReducedDuration: "Удалено тишины",
+            .silenceSegmentsDetected: "Найдено тихих фрагментов",
+            .silenceProcessedDuration: "Длительность после обработки",
+            .saveAsFilename: "Сохранить как",
+            .discard: "Отменить",
+            .confirmSaveAs: "Сохранить копию"
         ])
     }
 
@@ -1047,7 +1137,16 @@ private extension AppCopy {
             .share: "共有",
             .liveText: "ライブテキスト",
             .liveTextPlaceholder: "音声を認識中...",
-            .startRec: "録音開始"
+            .startRec: "録音開始",
+            .removeSilence: "無音を削除",
+            .removingSilence: "無音を削除中",
+            .removeSilenceProcessingDetail: "有効な音声を解析・結合中",
+            .silenceReducedDuration: "削減した無音時間",
+            .silenceSegmentsDetected: "検出した無音区間",
+            .silenceProcessedDuration: "処理後の長さ",
+            .saveAsFilename: "別名で保存",
+            .discard: "破棄",
+            .confirmSaveAs: "コピーを保存"
         ])
     }
 
@@ -1100,7 +1199,16 @@ private extension AppCopy {
             .share: "Teilen",
             .liveText: "Live-Text",
             .liveTextPlaceholder: "Sprache wird erkannt...",
-            .startRec: "Start"
+            .startRec: "Start",
+            .removeSilence: "Stille entfernen",
+            .removingSilence: "Stille wird entfernt",
+            .removeSilenceProcessingDetail: "Hörbares Audio wird analysiert und verbunden",
+            .silenceReducedDuration: "Entfernte Stille",
+            .silenceSegmentsDetected: "Erkannte stille Abschnitte",
+            .silenceProcessedDuration: "Verarbeitete Dauer",
+            .saveAsFilename: "Speichern unter",
+            .discard: "Verwerfen",
+            .confirmSaveAs: "Kopie speichern"
         ])
     }
 
@@ -1153,7 +1261,16 @@ private extension AppCopy {
             .share: "Partager",
             .liveText: "Texte en direct",
             .liveTextPlaceholder: "Écoute de la parole...",
-            .startRec: "Démarrer"
+            .startRec: "Démarrer",
+            .removeSilence: "Supprimer les silences",
+            .removingSilence: "Suppression des silences",
+            .removeSilenceProcessingDetail: "Analyse et assemblage de l’audio audible",
+            .silenceReducedDuration: "Silence supprimé",
+            .silenceSegmentsDetected: "Segments silencieux détectés",
+            .silenceProcessedDuration: "Durée traitée",
+            .saveAsFilename: "Enregistrer sous",
+            .discard: "Abandonner",
+            .confirmSaveAs: "Enregistrer une copie"
         ])
     }
 
