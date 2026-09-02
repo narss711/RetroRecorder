@@ -67,9 +67,13 @@ final class CloudSyncStore {
             let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             try? FileManager.default.createDirectory(at: supportDirectory, withIntermediateDirectories: true)
             storeDescription.url = supportDirectory.appendingPathComponent("RetroRecorderCloud.sqlite")
-            storeDescription.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(
+            let cloudKitOptions = NSPersistentCloudKitContainerOptions(
                 containerIdentifier: Self.containerIdentifier
             )
+            cloudKitOptions.databaseScope = .private
+            storeDescription.cloudKitContainerOptions = cloudKitOptions
+            storeDescription.shouldMigrateStoreAutomatically = true
+            storeDescription.shouldInferMappingModelAutomatically = true
             storeDescription.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
             storeDescription.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
         } else {
@@ -148,7 +152,10 @@ final class CloudSyncStore {
         let localModifiedAt = recording.metadata.modifiedAt ?? recording.createdAt
         let cloudModifiedAt = managed.updatedAt ?? .distantPast
         let localFileByteCount = fileByteCount(for: recording.url)
-        let needsAudioSync = managed.audioData == nil || managed.fileByteCount != localFileByteCount
+        let localFileModificationDate = fileModificationDate(for: recording.url)
+        let needsAudioSync = managed.audioData == nil ||
+            managed.fileByteCount != localFileByteCount ||
+            managed.fileModificationDate != localFileModificationDate
 
         if managed.isDeletedRecord,
            localModifiedAt <= cloudModifiedAt,
@@ -162,7 +169,7 @@ final class CloudSyncStore {
         managed.createdAt = recording.createdAt
         managed.duration = recording.duration
         managed.fileByteCount = localFileByteCount
-        managed.fileModificationDate = fileModificationDate(for: recording.url)
+        managed.fileModificationDate = localFileModificationDate
         managed.isDeletedRecord = false
 
         if isNew || localModifiedAt > cloudModifiedAt {
@@ -201,8 +208,11 @@ final class CloudSyncStore {
             let cloudModifiedAt = record.updatedAt ?? .distantPast
             let shouldApplyMetadata = !FileManager.default.fileExists(atPath: url.path) || cloudModifiedAt > localModifiedAt
             let localFileSize = fileByteCount(for: url)
+            let localFileModificationDate = fileModificationDate(for: url)
             let shouldApplyAudio = record.audioData != nil &&
-                (!FileManager.default.fileExists(atPath: url.path) || localFileSize != record.fileByteCount)
+                (!FileManager.default.fileExists(atPath: url.path) ||
+                    localFileSize != record.fileByteCount ||
+                    localFileModificationDate != record.fileModificationDate)
 
             if shouldApplyAudio, let audioData = record.audioData {
                 try? FileManager.default.createDirectory(at: RecordingStore.directory, withIntermediateDirectories: true)
