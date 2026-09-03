@@ -350,6 +350,17 @@ enum InterfaceRetroFont: String, CaseIterable, Identifiable {
         return .custom(postScriptName, size: adjustedSize(size), relativeTo: .body)
     }
 
+    func uiFont(size: CGFloat, weight: UIFont.Weight = .regular) -> UIFont {
+        let adjusted = adjustedSize(size)
+
+        guard let postScriptName else {
+            return .systemFont(ofSize: adjusted, weight: weight)
+        }
+
+        return UIFont(name: postScriptName, size: adjusted)
+            ?? .systemFont(ofSize: adjusted, weight: weight)
+    }
+
     private func adjustedSize(_ size: CGFloat) -> CGFloat {
         switch self {
         case .system:

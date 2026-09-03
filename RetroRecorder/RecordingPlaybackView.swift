@@ -1,6 +1,7 @@
 import AVFoundation
 import MediaPlayer
 import SwiftUI
+import UIKit
 
 struct RecordingPlaybackView: View {
     @Environment(\.dismiss) private var dismiss
@@ -707,6 +708,7 @@ private struct TranscriptDiffReviewSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appLanguage) private var appLanguage
     @Environment(\.interfaceRetroFont) private var interfaceRetroFont
+    @State private var scrollSynchronizer = TranscriptDiffScrollSynchronizer()
 
     let review: TranscriptDiffReview
     let onConfirm: () -> Void
@@ -714,17 +716,30 @@ private struct TranscriptDiffReviewSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+            GeometryReader { proxy in
+                let textWindowHeight = max(120, (proxy.size.height - 152) / 2)
+
+                VStack(alignment: .leading, spacing: 16) {
                     HStack(spacing: 14) {
                         LegendItem(color: TranscriptDiffBuilder.removedColor, title: appLanguage.text(.originalTranscriptDifferences))
                         LegendItem(color: TranscriptDiffBuilder.insertedColor, title: appLanguage.text(.updatedTranscriptDifferences))
                     }
 
-                    diffBlock(title: appLanguage.text(.beforeRecognition), text: review.oldAttributedText)
-                    diffBlock(title: appLanguage.text(.afterRecognition), text: review.newAttributedText)
+                    diffBlock(
+                        title: appLanguage.text(.beforeRecognition),
+                        text: review.oldAttributedText,
+                        role: .original,
+                        height: textWindowHeight
+                    )
+                    diffBlock(
+                        title: appLanguage.text(.afterRecognition),
+                        text: review.newAttributedText,
+                        role: .updated,
+                        height: textWindowHeight
+                    )
                 }
                 .padding(18)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
             }
             .background(Color.pixelPaper.ignoresSafeArea())
             .navigationTitle(appLanguage.text(.confirmReplaceTranscript))
@@ -763,24 +778,140 @@ private struct TranscriptDiffReviewSheet: View {
         }
     }
 
-    private func diffBlock(title: String, text: AttributedString) -> some View {
+    private func diffBlock(
+        title: String,
+        text: AttributedString,
+        role: TranscriptDiffScrollRole,
+        height: CGFloat
+    ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .retroFont(size: 13, weight: .black, design: .rounded)
                 .foregroundStyle(.pixelInk.opacity(0.62))
 
-            Text(text)
-                .font(interfaceRetroFont.font(size: 16, weight: .regular, design: .rounded))
-                .lineSpacing(5)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
+            SyncedTranscriptTextWindow(
+                text: text,
+                font: interfaceRetroFont.uiFont(size: 16),
+                role: role,
+                synchronizer: scrollSynchronizer,
+                layoutDirection: appLanguage.layoutDirection,
+                accessibilityLabel: title
+            )
+                .frame(maxWidth: .infinity)
+                .frame(height: height)
                 .background(Color.pixelPanel.opacity(0.34), in: PixelCornerShape(cornerRadius: 6))
                 .overlay {
                     PixelCornerShape(cornerRadius: 6)
                         .stroke(.pixelInk.opacity(0.12), lineWidth: 1)
                 }
         }
+    }
+}
+
+private enum TranscriptDiffScrollRole {
+    case original
+    case updated
+}
+
+private final class TranscriptDiffScrollSynchronizer: NSObject, UITextViewDelegate {
+    private weak var originalTextView: UITextView?
+    private weak var updatedTextView: UITextView?
+    private var isSynchronizing = false
+
+    func register(_ textView: UITextView, role: TranscriptDiffScrollRole) {
+        textView.delegate = self
+
+        switch role {
+        case .original:
+            originalTextView = textView
+        case .updated:
+            updatedTextView = textView
+        }
+    }
+
+    func unregister(_ textView: UITextView, role: TranscriptDiffScrollRole) {
+        switch role {
+        case .original where originalTextView === textView:
+            originalTextView = nil
+        case .updated where updatedTextView === textView:
+            updatedTextView = nil
+        default:
+            break
+        }
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard !isSynchronizing,
+              let source = scrollView as? UITextView,
+              let target = partner(for: source) else {
+            return
+        }
+
+        let sourceTravel = max(0, source.contentSize.height - source.bounds.height)
+        let targetTravel = max(0, target.contentSize.height - target.bounds.height)
+        guard sourceTravel > 0, targetTravel > 0 else {
+            return
+        }
+
+        let progress = min(1, max(0, source.contentOffset.y / sourceTravel))
+        let targetOffset = CGPoint(x: target.contentOffset.x, y: progress * targetTravel)
+
+        isSynchronizing = true
+        target.setContentOffset(targetOffset, animated: false)
+        isSynchronizing = false
+    }
+
+    private func partner(for source: UITextView) -> UITextView? {
+        if source === originalTextView {
+            return updatedTextView
+        }
+
+        if source === updatedTextView {
+            return originalTextView
+        }
+
+        return nil
+    }
+}
+
+private struct SyncedTranscriptTextWindow: UIViewRepresentable {
+    let text: AttributedString
+    let font: UIFont
+    let role: TranscriptDiffScrollRole
+    let synchronizer: TranscriptDiffScrollSynchronizer
+    let layoutDirection: LayoutDirection
+    let accessibilityLabel: String
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.backgroundColor = .clear
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.alwaysBounceVertical = true
+        textView.showsVerticalScrollIndicator = true
+        textView.indicatorStyle = .black
+        textView.textContainerInset = UIEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
+        textView.textContainer.lineFragmentPadding = 0
+        textView.textContainer.lineBreakMode = .byWordWrapping
+        textView.textAlignment = .natural
+        textView.accessibilityLabel = accessibilityLabel
+        textView.semanticContentAttribute = layoutDirection == .rightToLeft ? .forceRightToLeft : .forceLeftToRight
+        synchronizer.register(textView, role: role)
+        return textView
+    }
+
+    func updateUIView(_ textView: UITextView, context: Context) {
+        var styledText = text
+        styledText.font = Font(font)
+        let renderedText = NSAttributedString(styledText)
+
+        if !textView.attributedText.isEqual(to: renderedText) {
+            textView.attributedText = renderedText
+        }
+
+        textView.accessibilityLabel = accessibilityLabel
+        textView.semanticContentAttribute = layoutDirection == .rightToLeft ? .forceRightToLeft : .forceLeftToRight
+        synchronizer.register(textView, role: role)
     }
 }
 
