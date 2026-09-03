@@ -188,6 +188,11 @@ enum TranscriptionError: LocalizedError {
     }
 }
 
+struct SpeechTranscriptionResult {
+    let transcript: String
+    let timingSegments: [TranscriptTimingSegment]
+}
+
 final class SpeechTranscriber {
     private var recognitionTask: SFSpeechRecognitionTask?
 
@@ -199,7 +204,7 @@ final class SpeechTranscriber {
         url: URL,
         localeIdentifier: String,
         engine: TranscriptionEngine = .appleSpeech
-    ) async throws -> String {
+    ) async throws -> SpeechTranscriptionResult {
         guard engine == .appleSpeech else {
             throw TranscriptionError.engineUnavailable(engine)
         }
@@ -232,9 +237,35 @@ final class SpeechTranscriber {
                     }
 
                     didResume = true
-                    transcript.isEmpty
-                        ? continuation.resume(throwing: TranscriptionError.emptyResult)
-                        : continuation.resume(returning: transcript)
+                    guard transcript.isEmpty == false else {
+                        continuation.resume(throwing: TranscriptionError.emptyResult)
+                        return
+                    }
+
+                    let transcriptLength = (transcript as NSString).length
+                    let timingSegments = result.bestTranscription.segments.compactMap { segment -> TranscriptTimingSegment? in
+                        let range = segment.substringRange
+                        guard range.location != NSNotFound,
+                              range.length > 0,
+                              NSMaxRange(range) <= transcriptLength else {
+                            return nil
+                        }
+
+                        return TranscriptTimingSegment(
+                            text: segment.substring,
+                            startTime: segment.timestamp,
+                            duration: segment.duration,
+                            rangeLocation: range.location,
+                            rangeLength: range.length
+                        )
+                    }
+
+                    continuation.resume(
+                        returning: SpeechTranscriptionResult(
+                            transcript: transcript,
+                            timingSegments: timingSegments
+                        )
+                    )
                     return
                 }
 

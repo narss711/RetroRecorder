@@ -10,8 +10,17 @@ struct RecordingLocationMetadata: Codable, Equatable {
     var address: String?
 }
 
+struct TranscriptTimingSegment: Codable, Equatable {
+    var text: String
+    var startTime: TimeInterval
+    var duration: TimeInterval
+    var rangeLocation: Int
+    var rangeLength: Int
+}
+
 struct RecordingMetadata: Codable, Equatable {
     var languageIdentifier: String?
+    var transcriptTimingSegments: [TranscriptTimingSegment]? = nil
     var title: String?
     var tagTimes: [TimeInterval]?
     var recordIdentifier: String? = nil
@@ -163,10 +172,20 @@ enum RecordingStore {
 
     private static let supportedAudioExtensions: Set<String> = ["m4a", "caf", "wav", "aif", "aiff"]
 
-    static func saveTranscript(_ transcript: String, languageIdentifier: String, for recordingURL: URL) throws {
+    static func saveTranscript(
+        _ transcript: String,
+        languageIdentifier: String,
+        timingSegments: [TranscriptTimingSegment]? = nil,
+        for recordingURL: URL
+    ) throws {
         let cleanTranscript = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         try cleanTranscript.write(to: transcriptURL(for: recordingURL), atomically: true, encoding: .utf8)
-        try saveLanguageIdentifier(languageIdentifier, for: recordingURL)
+        var metadata = readMetadata(for: recordingURL)
+        metadata.languageIdentifier = SpeechLanguageOption.normalized(languageIdentifier)
+        metadata.transcriptTimingSegments = timingSegments
+        metadata.modifiedAt = Date()
+        try saveMetadata(metadata, for: recordingURL)
+        CloudSyncStore.shared.sync(recordingURL: recordingURL)
     }
 
     static func saveLanguageIdentifier(_ languageIdentifier: String, for recordingURL: URL) throws {

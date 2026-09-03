@@ -834,9 +834,18 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         }
     }
 
-    func saveTranscript(_ transcript: String, for recording: RecordingItem) {
+    func saveTranscript(
+        _ transcript: String,
+        timingSegments: [TranscriptTimingSegment]? = nil,
+        for recording: RecordingItem
+    ) {
         do {
-            try RecordingStore.saveTranscript(transcript, languageIdentifier: localeIdentifier(for: recording), for: recording.url)
+            try RecordingStore.saveTranscript(
+                transcript,
+                languageIdentifier: localeIdentifier(for: recording),
+                timingSegments: timingSegments,
+                for: recording.url
+            )
             recordings = RecordingStore.loadRecordings()
             refreshReviewRecordingIfNeeded(matching: recording.url)
         } catch {
@@ -1164,15 +1173,20 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
 
         do {
             let localeIdentifier = localeIdentifier(for: recording)
-            let transcript = try await recognizeTranscript(for: recording)
-            try RecordingStore.saveTranscript(transcript, languageIdentifier: localeIdentifier, for: recording.url)
+            let result = try await recognizeTranscript(for: recording)
+            try RecordingStore.saveTranscript(
+                result.transcript,
+                languageIdentifier: localeIdentifier,
+                timingSegments: result.timingSegments,
+                for: recording.url
+            )
             recordings = RecordingStore.loadRecordings()
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
-    func recognizeTranscriptPreview(_ recording: RecordingItem) async -> String? {
+    func recognizeTranscriptPreview(_ recording: RecordingItem) async -> SpeechTranscriptionResult? {
         guard transcribingRecordingID == nil else {
             return nil
         }
@@ -1189,7 +1203,7 @@ final class AudioRecorderViewModel: NSObject, ObservableObject {
         }
     }
 
-    private func recognizeTranscript(for recording: RecordingItem) async throws -> String {
+    private func recognizeTranscript(for recording: RecordingItem) async throws -> SpeechTranscriptionResult {
         try await transcriber.transcribe(
             url: recording.url,
             localeIdentifier: localeIdentifier(for: recording),

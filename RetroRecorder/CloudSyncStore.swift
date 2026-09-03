@@ -16,6 +16,7 @@ final class CloudRecording: NSManagedObject {
     @NSManaged var title: String?
     @NSManaged var languageIdentifier: String?
     @NSManaged var transcript: String?
+    @NSManaged var transcriptTimingData: Data?
     @NSManaged var tagTimesData: Data?
     @NSManaged var recordedAt: Date?
     @NSManaged var latitude: Double
@@ -287,6 +288,7 @@ final class CloudSyncStore {
         managed.title = metadata.title
         managed.languageIdentifier = metadata.languageIdentifier
         managed.transcript = recording.transcript
+        managed.transcriptTimingData = try? JSONEncoder().encode(metadata.transcriptTimingSegments)
         managed.tagTimesData = try? JSONEncoder().encode(recording.tagTimes)
         managed.recordedAt = metadata.recordedAt
         managed.latitude = metadata.location?.latitude ?? 0
@@ -310,6 +312,10 @@ final class CloudSyncStore {
 
     private func makeMetadata(from managed: CloudRecording) -> RecordingMetadata {
         let tagTimes = (try? JSONDecoder().decode([TimeInterval].self, from: managed.tagTimesData ?? Data()))
+        let transcriptTimingSegments = try? JSONDecoder().decode(
+            [TranscriptTimingSegment].self,
+            from: managed.transcriptTimingData ?? Data()
+        )
         let location: RecordingLocationMetadata?
         if managed.latitude != 0 || managed.longitude != 0 || managed.locationAddress != nil {
             location = RecordingLocationMetadata(
@@ -326,6 +332,7 @@ final class CloudSyncStore {
 
         return RecordingMetadata(
             languageIdentifier: managed.languageIdentifier,
+            transcriptTimingSegments: transcriptTimingSegments,
             title: managed.title,
             tagTimes: tagTimes,
             recordIdentifier: managed.recordID,
@@ -413,6 +420,7 @@ final class CloudSyncStore {
             attribute("title", .stringAttributeType),
             attribute("languageIdentifier", .stringAttributeType),
             attribute("transcript", .stringAttributeType),
+            attribute("transcriptTimingData", .binaryDataAttributeType, external: true),
             attribute("tagTimesData", .binaryDataAttributeType, external: true),
             attribute("recordedAt", .dateAttributeType),
             attribute("latitude", .doubleAttributeType, optional: false),

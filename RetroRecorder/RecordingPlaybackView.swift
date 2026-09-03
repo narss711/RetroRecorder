@@ -280,6 +280,7 @@ struct RecordingPlaybackView: View {
                 case .transcript:
                     TranscriptPlaybackDisplay(
                         transcript: currentRecording.transcript,
+                        timingSegments: currentRecording.metadata.transcriptTimingSegments ?? [],
                         languageTitle: recorder.languageTitle(for: currentRecording),
                         isTranscribing: recorder.transcribingRecordingID == recording.id,
                         transcriptDraftText: $transcriptDraftText,
@@ -452,7 +453,7 @@ struct RecordingPlaybackView: View {
                 finishRetranscriptionProgress()
             }
 
-            guard let newTranscript = await recorder.recognizeTranscriptPreview(currentRecording) else {
+            guard let newResult = await recorder.recognizeTranscriptPreview(currentRecording) else {
                 return
             }
 
@@ -462,7 +463,8 @@ struct RecordingPlaybackView: View {
 
             pendingTranscriptReview = TranscriptDiffReview(
                 oldText: currentRecording.transcript ?? "",
-                newText: newTranscript,
+                newText: newResult.transcript,
+                newTimingSegments: newResult.timingSegments,
                 language: appLanguage
             )
         }
@@ -474,7 +476,11 @@ struct RecordingPlaybackView: View {
     }
 
     private func confirmTranscriptReview(_ review: TranscriptDiffReview) {
-        recorder.saveTranscript(review.newText, for: currentRecording)
+        recorder.saveTranscript(
+            review.newText,
+            timingSegments: review.newTimingSegments,
+            for: currentRecording
+        )
         transcriptDraftText = review.newText.trimmingCharacters(in: .whitespacesAndNewlines)
         pendingTranscriptReview = nil
     }
@@ -630,14 +636,21 @@ private struct TranscriptDiffReview: Identifiable {
     let id = UUID()
     let oldText: String
     let newText: String
+    let newTimingSegments: [TranscriptTimingSegment]
     let oldHighlightedOffsets: Set<Int>
     let newHighlightedOffsets: Set<Int>
     let oldEmptyText: String
     let newEmptyText: String
 
-    init(oldText: String, newText: String, language: AppLanguage) {
+    init(
+        oldText: String,
+        newText: String,
+        newTimingSegments: [TranscriptTimingSegment],
+        language: AppLanguage
+    ) {
         self.oldText = oldText
         self.newText = newText
+        self.newTimingSegments = newTimingSegments
         oldEmptyText = language.text(.originalTranscriptEmpty)
         newEmptyText = language.text(.updatedTranscriptEmpty)
 
@@ -1723,6 +1736,7 @@ private struct TranscriptPlaybackDisplay: View, Equatable {
     @Environment(\.interfaceRetroFont) private var interfaceRetroFont
 
     let transcript: String?
+    let timingSegments: [TranscriptTimingSegment]
     let languageTitle: String
     let isTranscribing: Bool
     @Binding var transcriptDraftText: String
@@ -1738,14 +1752,16 @@ private struct TranscriptPlaybackDisplay: View, Equatable {
     let onSaveTranscript: (String) -> Void
     let onRetranscribe: () -> Void
     @FocusState private var isTranscriptFocused: Bool
+    @State private var manualScrollHoldUntil = Date.distantPast
 
     static func == (lhs: TranscriptPlaybackDisplay, rhs: TranscriptPlaybackDisplay) -> Bool {
         lhs.transcript == rhs.transcript
+            && lhs.timingSegments == rhs.timingSegments
             && lhs.languageTitle == rhs.languageTitle
             && lhs.isTranscribing == rhs.isTranscribing
             && lhs.transcriptDraftText == rhs.transcriptDraftText
             && lhs.isEditingTranscript == rhs.isEditingTranscript
-            && Int(lhs.currentTime) == Int(rhs.currentTime)
+            && Int(lhs.currentTime * 4) == Int(rhs.currentTime * 4)
             && lhs.duration == rhs.duration
             && lhs.textScale == rhs.textScale
             && lhs.tagSeconds == rhs.tagSeconds
@@ -1758,6 +1774,31 @@ private struct TranscriptPlaybackDisplay: View, Equatable {
             : appLanguage.text(.noTranscript)
     }
 
+    private var transcriptText: String {
+        transcript?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
+    private var playbackChunks: [TranscriptPlaybackChunk] {
+        TranscriptPlaybackTimeline.chunks(for: transcriptText)
+    }
+
+    private var activeTextRange: Range<String.Index>? {
+        TranscriptPlaybackTimeline.activeRange(
+            in: transcriptText,
+            timingSegments: timingSegments,
+            currentTime: currentTime,
+            duration: duration
+        )
+    }
+
+    private var activeChunkID: Int? {
+        guard let activeTextRange else {
+            return nil
+        }
+
+        return playbackChunks.first(where: { $0.range.overlaps(activeTextRange) })?.id
+    }
+
     private var visibleCharacterCount: Int {
         let source = isEditingTranscript ? transcriptDraftText : (transcript ?? "")
         return source.filter { !$0.isWhitespace && !$0.isNewline }.count
@@ -1765,8 +1806,9 @@ private struct TranscriptPlaybackDisplay: View, Equatable {
 
     var body: some View {
         GeometryReader { proxy in
-            ScrollView(.vertical, showsIndicators: true) {
-                VStack(alignment: .leading, spacing: 14) {
+            ScrollViewReader { scrollProxy in
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 14) {
                     HStack(spacing: 10) {
                         Label(appLanguage.format(.characterCountFormat, visibleCharacterCount), systemImage: "textformat.size")
                             .retroFont(size: 10, weight: .black, design: .monospaced)
@@ -1846,13 +1888,24 @@ private struct TranscriptPlaybackDisplay: View, Equatable {
                                 Rectangle()
                                     .stroke(.pixelInk.opacity(0.14), lineWidth: 1)
                             }
-                    } else {
+                    } else if transcriptText.isEmpty {
                         Text(displayText)
                             .font(interfaceRetroFont.font(size: CGFloat(17 * textScale), weight: .regular, design: .monospaced))
                             .foregroundStyle(.pixelInk)
                             .lineSpacing(CGFloat(5 * textScale))
-                            .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(playbackChunks) { chunk in
+                                Text(attributedText(for: chunk))
+                                    .font(interfaceRetroFont.font(size: CGFloat(17 * textScale), weight: .regular, design: .monospaced))
+                                    .foregroundStyle(.pixelInk)
+                                    .lineSpacing(CGFloat(5 * textScale))
+                                    .textSelection(.enabled)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .id(chunk.id)
+                            }
+                        }
                     }
                 }
                 .padding(18)
@@ -1860,21 +1913,61 @@ private struct TranscriptPlaybackDisplay: View, Equatable {
             }
             .contentShape(Rectangle())
             .simultaneousGesture(
-                DragGesture(minimumDistance: 20)
-                    .onEnded { value in
-                        guard !isEditingTranscript, duration > 0 else {
+                DragGesture(minimumDistance: 1)
+                    .onChanged { _ in
+                        guard !isEditingTranscript else {
                             return
                         }
 
-                        let delta = -Double(value.translation.height / max(1, proxy.size.height)) * duration * 0.35
-                        onSeek(min(max(0, currentTime + delta), duration))
+                        manualScrollHoldUntil = Date().addingTimeInterval(2.5)
                     }
             )
+            .onAppear {
+                followPlayback(using: scrollProxy)
+            }
+            .onChange(of: activeChunkID) { _, _ in
+                followPlayback(using: scrollProxy)
+            }
+        }
         }
         .background(Color.pixelPaper.opacity(0.64))
         .overlay {
             Rectangle()
                 .stroke(.pixelInk.opacity(0.18), lineWidth: 1)
+        }
+    }
+
+    private func attributedText(for chunk: TranscriptPlaybackChunk) -> AttributedString {
+        var output = AttributedString(String(transcriptText[chunk.range]))
+
+        guard let activeTextRange else {
+            return output
+        }
+
+        let lowerBound = max(chunk.range.lowerBound, activeTextRange.lowerBound)
+        let upperBound = min(chunk.range.upperBound, activeTextRange.upperBound)
+        guard lowerBound < upperBound else {
+            return output
+        }
+
+        let localStart = transcriptText.distance(from: chunk.range.lowerBound, to: lowerBound)
+        let localEnd = transcriptText.distance(from: chunk.range.lowerBound, to: upperBound)
+        let start = output.index(output.startIndex, offsetByCharacters: localStart)
+        let end = output.index(output.startIndex, offsetByCharacters: localEnd)
+        output[start..<end].foregroundColor = .pixelPaper
+        output[start..<end].backgroundColor = .pixelInk
+        return output
+    }
+
+    private func followPlayback(using scrollProxy: ScrollViewProxy) {
+        guard !isEditingTranscript,
+              Date() >= manualScrollHoldUntil,
+              let activeChunkID else {
+            return
+        }
+
+        withAnimation(.easeOut(duration: 0.18)) {
+            scrollProxy.scrollTo(activeChunkID, anchor: .center)
         }
     }
 
@@ -1948,6 +2041,127 @@ private struct TranscriptPlaybackDisplay: View, Equatable {
                 .background(Color.pixelPaper.opacity(0.78), in: PixelCornerShape(cornerRadius: 4))
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct TranscriptPlaybackChunk: Identifiable {
+    let id: Int
+    let range: Range<String.Index>
+}
+
+private enum TranscriptPlaybackTimeline {
+    static func chunks(for text: String, maximumCharacters: Int = 110) -> [TranscriptPlaybackChunk] {
+        guard text.isEmpty == false else {
+            return []
+        }
+
+        let characters = Array(text)
+        var chunks: [TranscriptPlaybackChunk] = []
+        var startOffset = 0
+
+        while startOffset < characters.count {
+            var endOffset = min(characters.count, startOffset + maximumCharacters)
+
+            if endOffset < characters.count {
+                let minimumBreakOffset = min(endOffset, startOffset + maximumCharacters / 2)
+                for candidate in stride(from: endOffset, through: minimumBreakOffset + 1, by: -1) {
+                    if isBreak(characters[candidate - 1]) {
+                        endOffset = candidate
+                        break
+                    }
+                }
+            }
+
+            let start = text.index(text.startIndex, offsetBy: startOffset)
+            let end = text.index(text.startIndex, offsetBy: endOffset)
+            let range = start..<end
+            chunks.append(TranscriptPlaybackChunk(id: NSRange(range, in: text).location, range: range))
+            startOffset = endOffset
+        }
+
+        return chunks
+    }
+
+    static func activeRange(
+        in text: String,
+        timingSegments: [TranscriptTimingSegment],
+        currentTime: TimeInterval,
+        duration: TimeInterval
+    ) -> Range<String.Index>? {
+        guard text.isEmpty == false else {
+            return nil
+        }
+
+        let validSegments = timingSegments
+            .filter { $0.rangeLocation >= 0 && $0.rangeLength > 0 }
+            .sorted { $0.startTime < $1.startTime }
+
+        if let timedSegment = activeTimingSegment(at: currentTime, segments: validSegments),
+           let range = Range(
+                NSRange(location: timedSegment.rangeLocation, length: timedSegment.rangeLength),
+                in: text
+           ) {
+            return range
+        }
+
+        return proportionalRange(in: text, currentTime: currentTime, duration: duration)
+    }
+
+    private static func activeTimingSegment(
+        at currentTime: TimeInterval,
+        segments: [TranscriptTimingSegment]
+    ) -> TranscriptTimingSegment? {
+        guard segments.isEmpty == false else {
+            return nil
+        }
+
+        if let matching = segments.first(where: {
+            currentTime >= $0.startTime && currentTime <= $0.startTime + max($0.duration, 0.12)
+        }) {
+            return matching
+        }
+
+        return segments.first(where: { $0.startTime > currentTime }) ?? segments.last
+    }
+
+    private static func proportionalRange(
+        in text: String,
+        currentTime: TimeInterval,
+        duration: TimeInterval
+    ) -> Range<String.Index>? {
+        let characters = Array(text)
+        guard characters.isEmpty == false, duration > 0 else {
+            return nil
+        }
+
+        let progress = min(1, max(0, currentTime / duration))
+        let currentOffset = min(
+            characters.count - 1,
+            max(0, Int((progress * Double(characters.count)).rounded(.down)))
+        )
+
+        guard characters.contains(where: { $0.isWhitespace }) else {
+            let start = text.index(text.startIndex, offsetBy: currentOffset)
+            return start..<text.index(after: start)
+        }
+
+        var lower = currentOffset
+        while lower > 0 && !isBreak(characters[lower - 1]) {
+            lower -= 1
+        }
+
+        var upper = currentOffset
+        while upper < characters.count && !isBreak(characters[upper]) {
+            upper += 1
+        }
+
+        let start = text.index(text.startIndex, offsetBy: lower)
+        let end = text.index(text.startIndex, offsetBy: max(lower + 1, upper))
+        return start..<end
+    }
+
+    private static func isBreak(_ character: Character) -> Bool {
+        character.isWhitespace || ".,;:!?。！？、，；：".contains(character)
     }
 }
 
