@@ -630,34 +630,50 @@ private struct TranscriptDiffReview: Identifiable {
     let id = UUID()
     let oldText: String
     let newText: String
-    let oldAttributedText: AttributedString
-    let newAttributedText: AttributedString
+    let oldHighlightedOffsets: Set<Int>
+    let newHighlightedOffsets: Set<Int>
+    let oldEmptyText: String
+    let newEmptyText: String
 
     init(oldText: String, newText: String, language: AppLanguage) {
         self.oldText = oldText
         self.newText = newText
+        oldEmptyText = language.text(.originalTranscriptEmpty)
+        newEmptyText = language.text(.updatedTranscriptEmpty)
 
-        let attributedText = TranscriptDiffBuilder.makeAttributedDiff(
-            oldText: oldText,
-            newText: newText,
-            oldEmptyText: language.text(.originalTranscriptEmpty),
-            newEmptyText: language.text(.updatedTranscriptEmpty)
+        let offsets = TranscriptDiffBuilder.highlightedOffsets(oldText: oldText, newText: newText)
+        oldHighlightedOffsets = offsets.old
+        newHighlightedOffsets = offsets.new
+    }
+
+    func originalAttributedText(font: UIFont) -> NSAttributedString {
+        TranscriptDiffBuilder.nativeAttributedText(
+            text: oldText,
+            highlightedOffsets: oldHighlightedOffsets,
+            highlightColor: TranscriptDiffBuilder.removedUIColor,
+            emptyText: oldEmptyText,
+            font: font
         )
-        oldAttributedText = attributedText.old
-        newAttributedText = attributedText.new
+    }
+
+    func updatedAttributedText(font: UIFont) -> NSAttributedString {
+        TranscriptDiffBuilder.nativeAttributedText(
+            text: newText,
+            highlightedOffsets: newHighlightedOffsets,
+            highlightColor: TranscriptDiffBuilder.insertedUIColor,
+            emptyText: newEmptyText,
+            font: font
+        )
     }
 }
 
 private enum TranscriptDiffBuilder {
     static let removedColor = Color(red: 0.96, green: 0.08, blue: 0.08)
     static let insertedColor = Color(red: 0.0, green: 0.34, blue: 1.0)
+    static let removedUIColor = UIColor(red: 0.96, green: 0.08, blue: 0.08, alpha: 1)
+    static let insertedUIColor = UIColor(red: 0.0, green: 0.34, blue: 1.0, alpha: 1)
 
-    static func makeAttributedDiff(
-        oldText: String,
-        newText: String,
-        oldEmptyText: String,
-        newEmptyText: String
-    ) -> (old: AttributedString, new: AttributedString) {
+    static func highlightedOffsets(oldText: String, newText: String) -> (old: Set<Int>, new: Set<Int>) {
         let oldCharacters = Array(oldText)
         let newCharacters = Array(newText)
         let difference = newCharacters.difference(from: oldCharacters)
@@ -674,30 +690,41 @@ private enum TranscriptDiffBuilder {
             }
         }
 
-        return (
-            old: attributedText(for: oldCharacters, highlightedOffsets: removedOffsets, tint: removedColor, emptyText: oldEmptyText),
-            new: attributedText(for: newCharacters, highlightedOffsets: insertedOffsets, tint: insertedColor, emptyText: newEmptyText)
-        )
+        return (old: removedOffsets, new: insertedOffsets)
     }
 
-    private static func attributedText(
-        for characters: [Character],
+    static func nativeAttributedText(
+        text: String,
         highlightedOffsets: Set<Int>,
-        tint: Color,
-        emptyText: String
-    ) -> AttributedString {
-        guard characters.isEmpty == false else {
-            var empty = AttributedString(emptyText)
-            empty.foregroundColor = .pixelInk.opacity(0.46)
-            return empty
+        highlightColor: UIColor,
+        emptyText: String,
+        font: UIFont
+    ) -> NSAttributedString {
+        let baseColor = UIColor { traits in
+            InterfaceColorTheme.current.palette(for: traits).pixelInk
         }
 
-        var output = AttributedString()
+        guard text.isEmpty == false else {
+            return NSAttributedString(
+                string: emptyText,
+                attributes: [
+                    .font: font,
+                    .foregroundColor: baseColor.withAlphaComponent(0.46)
+                ]
+            )
+        }
 
-        for (offset, character) in characters.enumerated() {
-            var segment = AttributedString(String(character))
-            segment.foregroundColor = highlightedOffsets.contains(offset) ? tint : .pixelInk
-            output += segment
+        let output = NSMutableAttributedString(
+            string: text,
+            attributes: [
+                .font: font,
+                .foregroundColor: baseColor
+            ]
+        )
+
+        for (offset, index) in text.indices.enumerated() where highlightedOffsets.contains(offset) {
+            let range = NSRange(index..<text.index(after: index), in: text)
+            output.addAttribute(.foregroundColor, value: highlightColor, range: range)
         }
 
         return output
@@ -727,13 +754,13 @@ private struct TranscriptDiffReviewSheet: View {
 
                     diffBlock(
                         title: appLanguage.text(.beforeRecognition),
-                        text: review.oldAttributedText,
+                        text: review.originalAttributedText(font: interfaceRetroFont.uiFont(size: 16)),
                         role: .original,
                         height: textWindowHeight
                     )
                     diffBlock(
                         title: appLanguage.text(.afterRecognition),
-                        text: review.newAttributedText,
+                        text: review.updatedAttributedText(font: interfaceRetroFont.uiFont(size: 16)),
                         role: .updated,
                         height: textWindowHeight
                     )
@@ -780,7 +807,7 @@ private struct TranscriptDiffReviewSheet: View {
 
     private func diffBlock(
         title: String,
-        text: AttributedString,
+        text: NSAttributedString,
         role: TranscriptDiffScrollRole,
         height: CGFloat
     ) -> some View {
@@ -791,7 +818,6 @@ private struct TranscriptDiffReviewSheet: View {
 
             SyncedTranscriptTextWindow(
                 text: text,
-                font: interfaceRetroFont.uiFont(size: 16),
                 role: role,
                 synchronizer: scrollSynchronizer,
                 layoutDirection: appLanguage.layoutDirection,
@@ -875,8 +901,7 @@ private final class TranscriptDiffScrollSynchronizer: NSObject, UITextViewDelega
 }
 
 private struct SyncedTranscriptTextWindow: UIViewRepresentable {
-    let text: AttributedString
-    let font: UIFont
+    let text: NSAttributedString
     let role: TranscriptDiffScrollRole
     let synchronizer: TranscriptDiffScrollSynchronizer
     let layoutDirection: LayoutDirection
@@ -901,12 +926,8 @@ private struct SyncedTranscriptTextWindow: UIViewRepresentable {
     }
 
     func updateUIView(_ textView: UITextView, context: Context) {
-        var styledText = text
-        styledText.font = Font(font)
-        let renderedText = NSAttributedString(styledText)
-
-        if !textView.attributedText.isEqual(to: renderedText) {
-            textView.attributedText = renderedText
+        if !textView.attributedText.isEqual(to: text) {
+            textView.attributedText = text
         }
 
         textView.accessibilityLabel = accessibilityLabel
