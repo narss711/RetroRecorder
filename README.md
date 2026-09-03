@@ -19,7 +19,7 @@ The app converts the selected media into up to 24 JPEG frames and saves them in 
 
 Before running on a physical device, enable this App Group for both the app target and widget extension in your Apple Developer account:
 
-`group.com.lutan.RetroRecorder.mediawidget`
+`group.com.narss711.RetroRecorder.shared`
 
 ## Running
 

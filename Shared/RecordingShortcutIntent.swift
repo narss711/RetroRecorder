@@ -45,7 +45,7 @@ enum AppLaunchAction: String, Codable, Hashable {
 }
 
 enum AppLaunchActionStore {
-    private static let appGroupID = "group.com.lutan.RetroRecorder.mediawidget"
+    private static let appGroupID = "group.com.narss711.RetroRecorder.shared"
     private static let pendingActionKey = "retro-recorder-pending-launch-action"
 
     static func write(_ action: AppLaunchAction) {

@@ -44,7 +44,7 @@ final class CloudRecording: NSManagedObject {
 
 final class CloudSyncStore {
     static let shared = CloudSyncStore()
-    static let containerIdentifier = "iCloud.com.lutan.RetroRecorder"
+    static let containerIdentifier = "iCloud.com.narss711.RetroRecorder"
 
     private static let cloudKitEnabledInfoKey = "RetroRecorderCloudKitEnabled"
 

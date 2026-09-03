@@ -62,7 +62,7 @@ struct RecordingLiveActivityCommandPayload: Codable, Hashable {
 }
 
 enum RecordingLiveActivityCommandStore {
-    private static let appGroupID = "group.com.lutan.RetroRecorder.mediawidget"
+    private static let appGroupID = "group.com.narss711.RetroRecorder.shared"
     private static let pendingCommandKey = "recording-live-activity-pending-command"
 
     static func write(_ command: RecordingLiveActivityCommand) {

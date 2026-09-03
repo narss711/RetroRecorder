@@ -4,7 +4,7 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.lutan.RetroRecorder.mediawidget</string>
+		<string>group.com.narss711.RetroRecorder.shared</string>
 	</array>
 </dict>
 </plist>

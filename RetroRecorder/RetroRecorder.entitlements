@@ -6,7 +6,7 @@
 	<string>Development</string>
 	<key>com.apple.developer.icloud-container-identifiers</key>
 	<array>
-		<string>iCloud.com.lutan.RetroRecorder</string>
+		<string>iCloud.com.narss711.RetroRecorder</string>
 	</array>
 	<key>com.apple.developer.icloud-services</key>
 	<array>
@@ -14,7 +14,7 @@
 	</array>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.lutan.RetroRecorder.mediawidget</string>
+		<string>group.com.narss711.RetroRecorder.shared</string>
 	</array>
 </dict>
 </plist>
