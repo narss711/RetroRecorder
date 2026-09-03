@@ -118,8 +118,8 @@ struct RecordingPlaybackView: View {
 
                 if isPlaybackInteractionLocked {
                     PlaybackProcessingOverlay(
-                        title: isRetranscribingCurrentRecording ? "正在重新识别文字" : appLanguage.text(.removingSilence),
-                        detail: isRetranscribingCurrentRecording ? "处理完成后会显示差异确认" : appLanguage.text(.removeSilenceProcessingDetail),
+                        title: isRetranscribingCurrentRecording ? appLanguage.text(.retranscribingTranscript) : appLanguage.text(.removingSilence),
+                        detail: isRetranscribingCurrentRecording ? appLanguage.text(.retranscriptionReviewDetail) : appLanguage.text(.removeSilenceProcessingDetail),
                         progress: isRetranscribingCurrentRecording ? max(0.06, retranscriptionProgress) : nil
                     )
                 }
@@ -169,6 +169,8 @@ struct RecordingPlaybackView: View {
                     pendingTranscriptReview = nil
                 }
             )
+            .environment(\.appLanguage, appLanguage)
+            .environment(\.layoutDirection, appLanguage.layoutDirection)
         }
         .sheet(item: $pendingSilenceRemoval) { result in
             SilenceRemovalReviewSheet(
@@ -459,7 +461,8 @@ struct RecordingPlaybackView: View {
 
             pendingTranscriptReview = TranscriptDiffReview(
                 oldText: currentRecording.transcript ?? "",
-                newText: newTranscript
+                newText: newTranscript,
+                language: appLanguage
             )
         }
     }
@@ -629,11 +632,16 @@ private struct TranscriptDiffReview: Identifiable {
     let oldAttributedText: AttributedString
     let newAttributedText: AttributedString
 
-    init(oldText: String, newText: String) {
+    init(oldText: String, newText: String, language: AppLanguage) {
         self.oldText = oldText
         self.newText = newText
 
-        let attributedText = TranscriptDiffBuilder.makeAttributedDiff(oldText: oldText, newText: newText)
+        let attributedText = TranscriptDiffBuilder.makeAttributedDiff(
+            oldText: oldText,
+            newText: newText,
+            oldEmptyText: language.text(.originalTranscriptEmpty),
+            newEmptyText: language.text(.updatedTranscriptEmpty)
+        )
         oldAttributedText = attributedText.old
         newAttributedText = attributedText.new
     }
@@ -643,7 +651,12 @@ private enum TranscriptDiffBuilder {
     static let removedColor = Color(red: 0.96, green: 0.08, blue: 0.08)
     static let insertedColor = Color(red: 0.0, green: 0.34, blue: 1.0)
 
-    static func makeAttributedDiff(oldText: String, newText: String) -> (old: AttributedString, new: AttributedString) {
+    static func makeAttributedDiff(
+        oldText: String,
+        newText: String,
+        oldEmptyText: String,
+        newEmptyText: String
+    ) -> (old: AttributedString, new: AttributedString) {
         let oldCharacters = Array(oldText)
         let newCharacters = Array(newText)
         let difference = newCharacters.difference(from: oldCharacters)
@@ -661,8 +674,8 @@ private enum TranscriptDiffBuilder {
         }
 
         return (
-            old: attributedText(for: oldCharacters, highlightedOffsets: removedOffsets, tint: removedColor, emptyText: "识别前为空"),
-            new: attributedText(for: newCharacters, highlightedOffsets: insertedOffsets, tint: insertedColor, emptyText: "识别后为空")
+            old: attributedText(for: oldCharacters, highlightedOffsets: removedOffsets, tint: removedColor, emptyText: oldEmptyText),
+            new: attributedText(for: newCharacters, highlightedOffsets: insertedOffsets, tint: insertedColor, emptyText: newEmptyText)
         )
     }
 
@@ -692,6 +705,7 @@ private enum TranscriptDiffBuilder {
 
 private struct TranscriptDiffReviewSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appLanguage) private var appLanguage
     @Environment(\.interfaceRetroFont) private var interfaceRetroFont
 
     let review: TranscriptDiffReview
@@ -703,17 +717,17 @@ private struct TranscriptDiffReviewSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     HStack(spacing: 14) {
-                        LegendItem(color: TranscriptDiffBuilder.removedColor, title: "旧文本差异")
-                        LegendItem(color: TranscriptDiffBuilder.insertedColor, title: "新文本差异")
+                        LegendItem(color: TranscriptDiffBuilder.removedColor, title: appLanguage.text(.originalTranscriptDifferences))
+                        LegendItem(color: TranscriptDiffBuilder.insertedColor, title: appLanguage.text(.updatedTranscriptDifferences))
                     }
 
-                    diffBlock(title: "识别前", text: review.oldAttributedText)
-                    diffBlock(title: "识别后", text: review.newAttributedText)
+                    diffBlock(title: appLanguage.text(.beforeRecognition), text: review.oldAttributedText)
+                    diffBlock(title: appLanguage.text(.afterRecognition), text: review.newAttributedText)
                 }
                 .padding(18)
             }
             .background(Color.pixelPaper.ignoresSafeArea())
-            .navigationTitle("确认覆盖文本")
+            .navigationTitle(appLanguage.text(.confirmReplaceTranscript))
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .bottom) {
                 HStack(spacing: 12) {
@@ -721,7 +735,7 @@ private struct TranscriptDiffReviewSheet: View {
                         onDiscard()
                         dismiss()
                     } label: {
-                        Text("放弃")
+                        Text(appLanguage.text(.discard))
                             .retroFont(size: 15, weight: .black, design: .rounded)
                             .frame(maxWidth: .infinity)
                             .frame(height: 46)
@@ -734,7 +748,7 @@ private struct TranscriptDiffReviewSheet: View {
                         onConfirm()
                         dismiss()
                     } label: {
-                        Text("确认覆盖")
+                        Text(appLanguage.text(.confirmOverwrite))
                             .retroFont(size: 15, weight: .black, design: .rounded)
                             .frame(maxWidth: .infinity)
                             .frame(height: 46)
@@ -1654,7 +1668,7 @@ private struct TranscriptPlaybackDisplay: View, Equatable {
                         }
                         .buttonStyle(.plain)
                         .disabled(isTranscribing || isEditingTranscript)
-                        .accessibilityLabel("重新识别")
+                        .accessibilityLabel(appLanguage.text(.retranscribe))
                     }
 
                     if !tagSeconds.isEmpty {

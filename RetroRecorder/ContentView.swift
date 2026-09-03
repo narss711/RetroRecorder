@@ -486,6 +486,17 @@ enum AppCopy: Hashable {
     case saveAsFilename
     case discard
     case confirmSaveAs
+    case retranscribingTranscript
+    case retranscriptionReviewDetail
+    case originalTranscriptEmpty
+    case updatedTranscriptEmpty
+    case originalTranscriptDifferences
+    case updatedTranscriptDifferences
+    case beforeRecognition
+    case afterRecognition
+    case confirmReplaceTranscript
+    case confirmOverwrite
+    case retranscribe
 }
 
 extension AppCopy {
@@ -635,6 +646,28 @@ extension AppCopy {
             return "放弃"
         case .confirmSaveAs:
             return "确认另存"
+        case .retranscribingTranscript:
+            return "正在重新识别文字"
+        case .retranscriptionReviewDetail:
+            return "处理完成后会显示差异确认"
+        case .originalTranscriptEmpty:
+            return "识别前为空"
+        case .updatedTranscriptEmpty:
+            return "识别后为空"
+        case .originalTranscriptDifferences:
+            return "旧文本差异"
+        case .updatedTranscriptDifferences:
+            return "新文本差异"
+        case .beforeRecognition:
+            return "识别前"
+        case .afterRecognition:
+            return "识别后"
+        case .confirmReplaceTranscript:
+            return "确认覆盖文本"
+        case .confirmOverwrite:
+            return "确认覆盖"
+        case .retranscribe:
+            return "重新识别"
         }
     }
 
@@ -784,6 +817,28 @@ extension AppCopy {
             return "Discard"
         case .confirmSaveAs:
             return "Save Copy"
+        case .retranscribingTranscript:
+            return "Re-recognizing Transcript"
+        case .retranscriptionReviewDetail:
+            return "The differences will be shown for confirmation when processing is complete"
+        case .originalTranscriptEmpty:
+            return "Original transcript is empty"
+        case .updatedTranscriptEmpty:
+            return "New transcript is empty"
+        case .originalTranscriptDifferences:
+            return "Original text differences"
+        case .updatedTranscriptDifferences:
+            return "New text differences"
+        case .beforeRecognition:
+            return "Before recognition"
+        case .afterRecognition:
+            return "After recognition"
+        case .confirmReplaceTranscript:
+            return "Confirm Replace Text"
+        case .confirmOverwrite:
+            return "Confirm Replace"
+        case .retranscribe:
+            return "Re-recognize"
         }
     }
 }
@@ -854,7 +909,18 @@ private extension AppCopy {
             .silenceProcessedDuration: "處理後時長",
             .saveAsFilename: "另存為檔案名稱",
             .discard: "放棄",
-            .confirmSaveAs: "確認另存"
+            .confirmSaveAs: "確認另存",
+            .retranscribingTranscript: "正在重新辨識文字",
+            .retranscriptionReviewDetail: "處理完成後會顯示差異確認",
+            .originalTranscriptEmpty: "辨識前為空",
+            .updatedTranscriptEmpty: "辨識後為空",
+            .originalTranscriptDifferences: "舊文字差異",
+            .updatedTranscriptDifferences: "新文字差異",
+            .beforeRecognition: "辨識前",
+            .afterRecognition: "辨識後",
+            .confirmReplaceTranscript: "確認覆蓋文字",
+            .confirmOverwrite: "確認覆蓋",
+            .retranscribe: "重新辨識"
         ])
     }
 
@@ -919,7 +985,18 @@ private extension AppCopy {
             .silenceProcessedDuration: "Duración procesada",
             .saveAsFilename: "Guardar con nombre",
             .discard: "Descartar",
-            .confirmSaveAs: "Guardar copia"
+            .confirmSaveAs: "Guardar copia",
+            .retranscribingTranscript: "Retranscribiendo texto",
+            .retranscriptionReviewDetail: "Al terminar se mostrarán las diferencias para confirmar",
+            .originalTranscriptEmpty: "La transcripción original está vacía",
+            .updatedTranscriptEmpty: "La nueva transcripción está vacía",
+            .originalTranscriptDifferences: "Diferencias del texto original",
+            .updatedTranscriptDifferences: "Diferencias del texto nuevo",
+            .beforeRecognition: "Antes del reconocimiento",
+            .afterRecognition: "Después del reconocimiento",
+            .confirmReplaceTranscript: "Confirmar reemplazo de texto",
+            .confirmOverwrite: "Confirmar reemplazo",
+            .retranscribe: "Volver a reconocer"
         ])
     }
 
@@ -984,7 +1061,18 @@ private extension AppCopy {
             .silenceProcessedDuration: "المدة بعد المعالجة",
             .saveAsFilename: "حفظ باسم",
             .discard: "تجاهل",
-            .confirmSaveAs: "حفظ نسخة"
+            .confirmSaveAs: "حفظ نسخة",
+            .retranscribingTranscript: "جارٍ إعادة تحويل التسجيل إلى نص",
+            .retranscriptionReviewDetail: "ستظهر الفروقات للتأكيد عند اكتمال المعالجة",
+            .originalTranscriptEmpty: "النص الأصلي فارغ",
+            .updatedTranscriptEmpty: "النص الجديد فارغ",
+            .originalTranscriptDifferences: "اختلافات النص الأصلي",
+            .updatedTranscriptDifferences: "اختلافات النص الجديد",
+            .beforeRecognition: "قبل التعرّف",
+            .afterRecognition: "بعد التعرّف",
+            .confirmReplaceTranscript: "تأكيد استبدال النص",
+            .confirmOverwrite: "تأكيد الاستبدال",
+            .retranscribe: "إعادة التعرّف"
         ])
     }
 
@@ -1049,7 +1137,18 @@ private extension AppCopy {
             .silenceProcessedDuration: "Duração processada",
             .saveAsFilename: "Salvar como",
             .discard: "Descartar",
-            .confirmSaveAs: "Salvar cópia"
+            .confirmSaveAs: "Salvar cópia",
+            .retranscribingTranscript: "Retranscrevendo texto",
+            .retranscriptionReviewDetail: "As diferenças serão exibidas para confirmação ao concluir",
+            .originalTranscriptEmpty: "A transcrição original está vazia",
+            .updatedTranscriptEmpty: "A nova transcrição está vazia",
+            .originalTranscriptDifferences: "Diferenças do texto original",
+            .updatedTranscriptDifferences: "Diferenças do novo texto",
+            .beforeRecognition: "Antes do reconhecimento",
+            .afterRecognition: "Após o reconhecimento",
+            .confirmReplaceTranscript: "Confirmar substituição do texto",
+            .confirmOverwrite: "Confirmar substituição",
+            .retranscribe: "Reconhecer novamente"
         ])
     }
 
@@ -1114,7 +1213,18 @@ private extension AppCopy {
             .silenceProcessedDuration: "Длительность после обработки",
             .saveAsFilename: "Сохранить как",
             .discard: "Отменить",
-            .confirmSaveAs: "Сохранить копию"
+            .confirmSaveAs: "Сохранить копию",
+            .retranscribingTranscript: "Повторное распознавание текста",
+            .retranscriptionReviewDetail: "После обработки будут показаны различия для подтверждения",
+            .originalTranscriptEmpty: "Исходный текст пуст",
+            .updatedTranscriptEmpty: "Новый текст пуст",
+            .originalTranscriptDifferences: "Различия исходного текста",
+            .updatedTranscriptDifferences: "Различия нового текста",
+            .beforeRecognition: "До распознавания",
+            .afterRecognition: "После распознавания",
+            .confirmReplaceTranscript: "Подтвердить замену текста",
+            .confirmOverwrite: "Подтвердить замену",
+            .retranscribe: "Распознать заново"
         ])
     }
 
@@ -1179,7 +1289,18 @@ private extension AppCopy {
             .silenceProcessedDuration: "処理後の長さ",
             .saveAsFilename: "別名で保存",
             .discard: "破棄",
-            .confirmSaveAs: "コピーを保存"
+            .confirmSaveAs: "コピーを保存",
+            .retranscribingTranscript: "文字を再認識中",
+            .retranscriptionReviewDetail: "処理完了後に差分を確認できます",
+            .originalTranscriptEmpty: "認識前の文字起こしは空です",
+            .updatedTranscriptEmpty: "新しい文字起こしは空です",
+            .originalTranscriptDifferences: "元のテキストの差分",
+            .updatedTranscriptDifferences: "新しいテキストの差分",
+            .beforeRecognition: "認識前",
+            .afterRecognition: "認識後",
+            .confirmReplaceTranscript: "テキスト置換の確認",
+            .confirmOverwrite: "置換を確認",
+            .retranscribe: "再認識"
         ])
     }
 
@@ -1244,7 +1365,18 @@ private extension AppCopy {
             .silenceProcessedDuration: "Verarbeitete Dauer",
             .saveAsFilename: "Speichern unter",
             .discard: "Verwerfen",
-            .confirmSaveAs: "Kopie speichern"
+            .confirmSaveAs: "Kopie speichern",
+            .retranscribingTranscript: "Text wird neu erkannt",
+            .retranscriptionReviewDetail: "Nach Abschluss werden die Unterschiede zur Bestätigung angezeigt",
+            .originalTranscriptEmpty: "Der ursprüngliche Text ist leer",
+            .updatedTranscriptEmpty: "Der neue Text ist leer",
+            .originalTranscriptDifferences: "Unterschiede im ursprünglichen Text",
+            .updatedTranscriptDifferences: "Unterschiede im neuen Text",
+            .beforeRecognition: "Vor der Erkennung",
+            .afterRecognition: "Nach der Erkennung",
+            .confirmReplaceTranscript: "Textersetzung bestätigen",
+            .confirmOverwrite: "Ersetzen bestätigen",
+            .retranscribe: "Erneut erkennen"
         ])
     }
 
@@ -1309,7 +1441,18 @@ private extension AppCopy {
             .silenceProcessedDuration: "Durée traitée",
             .saveAsFilename: "Enregistrer sous",
             .discard: "Abandonner",
-            .confirmSaveAs: "Enregistrer une copie"
+            .confirmSaveAs: "Enregistrer une copie",
+            .retranscribingTranscript: "Nouvelle transcription en cours",
+            .retranscriptionReviewDetail: "Les différences seront affichées pour confirmation à la fin du traitement",
+            .originalTranscriptEmpty: "La transcription d’origine est vide",
+            .updatedTranscriptEmpty: "La nouvelle transcription est vide",
+            .originalTranscriptDifferences: "Différences du texte d’origine",
+            .updatedTranscriptDifferences: "Différences du nouveau texte",
+            .beforeRecognition: "Avant la reconnaissance",
+            .afterRecognition: "Après la reconnaissance",
+            .confirmReplaceTranscript: "Confirmer le remplacement du texte",
+            .confirmOverwrite: "Confirmer le remplacement",
+            .retranscribe: "Reconnaître à nouveau"
         ])
     }
 
