@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Retro Recorder: Voice & Text captures audio, live transcripts, and the moments that matter.">
+    <title>Retro Recorder: Voice &amp; Text</title>
+    <style>
+      :root {
+        --ink: #1d2116;
+        --paper: #dad2b7;
+        --screen: #acb177;
+        --screen-deep: #626b45;
+        --frame: #393a2b;
+        --red: #a3342a;
+        --cream: #f4efdd;
+        --line: #63614d;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "Avenir Next", Avenir, "Trebuchet MS", system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      a { color: inherit; }
+      .shell { width: min(1160px, calc(100% - 40px)); margin: 0 auto; }
+      .eyebrow { margin: 0 0 10px; color: var(--red); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { max-width: 720px; margin-bottom: 20px; font-size: clamp(3rem, 7vw, 6.6rem); line-height: .91; letter-spacing: 0; }
+      h2 { margin-bottom: 16px; font-size: clamp(2rem, 4vw, 3.75rem); line-height: 1; letter-spacing: 0; }
+      h3 { margin-bottom: 8px; font-size: 1.15rem; }
+      p { font-size: 1.05rem; }
+      .lead { max-width: 560px; color: #404332; font-size: 1.22rem; }
+
+      .site-header { border-bottom: 3px solid var(--ink); }
+      .topbar { display: flex; align-items: center; justify-content: space-between; min-height: 78px; gap: 24px; }
+      .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+      .brand-mark { display: grid; width: 42px; height: 42px; place-items: center; border: 2px solid var(--ink); background: var(--screen); color: var(--ink); font-size: 1.25rem; line-height: 1; }
+      nav { display: flex; gap: 20px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; font-weight: 800; }
+      nav a { text-decoration: none; }
+      nav a:hover { color: var(--red); }
+
+      .hero { overflow: hidden; padding: 72px 0 36px; border-bottom: 3px solid var(--ink); }
+      .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 430px); align-items: center; gap: clamp(32px, 7vw, 92px); }
+      .button-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+      .button { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; padding: 0 18px; border: 3px solid var(--ink); background: var(--cream); box-shadow: 4px 4px 0 var(--ink); color: var(--ink); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; font-weight: 900; text-decoration: none; text-transform: uppercase; }
+      .button:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+      .button.primary { background: var(--red); color: var(--cream); }
+      .device { position: relative; width: min(100%, 380px); margin: 0 auto; padding: 12px; background: var(--frame); border: 4px solid var(--ink); border-radius: 32px; box-shadow: 12px 12px 0 rgba(29, 33, 22, .28); }
+      .pixel-screen { min-height: 532px; padding: 22px 18px; border: 2px solid var(--ink); border-radius: 20px; background: var(--paper); color: var(--ink); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .pixel-screen__title { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 3px solid var(--ink); font-size: .7rem; font-weight: 900; letter-spacing: .08em; }
+      .pixel-dot { width: 12px; height: 12px; background: var(--red); box-shadow: 0 0 0 3px var(--ink); }
+      .pixel-screen__status { margin: 30px 0 18px; color: var(--screen-deep); font-size: .72rem; font-weight: 900; }
+      .pixel-time { font-size: clamp(2.7rem, 10vw, 4.1rem); font-weight: 900; letter-spacing: .02em; }
+      .meters { display: flex; align-items: end; height: 144px; gap: 6px; margin: 26px 0; padding: 12px; border: 3px solid var(--ink); background: var(--screen); }
+      .meters i { display: block; width: 100%; background: var(--ink); }
+      .meters i:nth-child(1) { height: 22%; }.meters i:nth-child(2) { height: 50%; }.meters i:nth-child(3) { height: 82%; }.meters i:nth-child(4) { height: 43%; }.meters i:nth-child(5) { height: 68%; }.meters i:nth-child(6) { height: 30%; }.meters i:nth-child(7) { height: 94%; }.meters i:nth-child(8) { height: 58%; }.meters i:nth-child(9) { height: 38%; }.meters i:nth-child(10) { height: 77%; }
+      .pixel-screen__live { min-height: 72px; padding: 10px; border: 3px solid var(--ink); background: var(--cream); font-size: .7rem; line-height: 1.6; }
+      .pixel-screen__controls { display: flex; justify-content: center; gap: 18px; margin-top: 26px; }
+      .pixel-screen__controls b { display: grid; width: 48px; height: 48px; place-items: center; border: 3px solid var(--ink); background: var(--cream); font-size: .9rem; }
+      .pixel-screen__controls b:nth-child(2) { background: var(--red); color: var(--cream); }
+      .device-label { position: absolute; right: -38px; bottom: 44px; padding: 7px 10px; border: 2px solid var(--ink); background: var(--red); color: var(--cream); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .72rem; font-weight: 900; transform: rotate(-4deg); }
+
+      .ticker { overflow: hidden; border-bottom: 3px solid var(--ink); background: var(--screen); }
+      .ticker-track { display: flex; width: max-content; padding: 12px 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 900; font-size: .85rem; letter-spacing: .11em; text-transform: uppercase; animation: ticker 26s linear infinite; }
+      .ticker-track span { padding-right: 38px; }
+      @keyframes ticker { to { transform: translateX(-50%); } }
+
+      section { padding: 96px 0; border-bottom: 3px solid var(--ink); }
+      .intro-grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(32px, 8vw, 120px); }
+      .sticky-note { align-self: start; padding: 22px; border: 3px solid var(--ink); background: var(--cream); box-shadow: 7px 7px 0 var(--red); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .93rem; font-weight: 800; }
+      .feature-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 3px solid var(--ink); border-left: 3px solid var(--ink); }
+      .feature { min-height: 200px; padding: 26px; border-right: 3px solid var(--ink); border-bottom: 3px solid var(--ink); background: var(--cream); }
+      .feature:nth-child(2), .feature:nth-child(3) { background: var(--screen); }
+      .feature-mark { display: grid; place-items: center; width: 36px; height: 36px; margin-bottom: 24px; border: 3px solid var(--ink); background: var(--red); color: var(--cream); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 900; }
+      .feature p { margin-bottom: 0; color: #3f4330; font-size: .95rem; }
+
+      .screens { background: var(--screen-deep); color: var(--cream); }
+      .screens .eyebrow { color: var(--paper); }
+      .screens .lead { color: #f3eedb; }
+      .view-strip { display: grid; grid-template-columns: repeat(5, minmax(168px, 1fr)); gap: 22px; margin-top: 44px; overflow-x: auto; padding-bottom: 12px; }
+      .view-card { min-width: 168px; margin: 0; }
+      .view-card__mock { height: 300px; padding: 16px; border: 3px solid var(--ink); background: var(--paper); box-shadow: 7px 7px 0 var(--ink); color: var(--ink); }
+      .view-card__head { height: 22px; margin-bottom: 18px; border: 2px solid var(--ink); background: var(--screen); }
+      .view-card__wave { display: flex; align-items: center; height: 116px; gap: 4px; margin-bottom: 18px; }
+      .view-card__wave i { width: 100%; background: var(--ink); }
+      .view-card__wave i:nth-child(1) { height: 18%; }.view-card__wave i:nth-child(2) { height: 42%; }.view-card__wave i:nth-child(3) { height: 75%; }.view-card__wave i:nth-child(4) { height: 30%; }.view-card__wave i:nth-child(5) { height: 92%; }.view-card__wave i:nth-child(6) { height: 46%; }.view-card__wave i:nth-child(7) { height: 64%; }.view-card__wave i:nth-child(8) { height: 24%; }
+      .view-card__line { height: 9px; margin-top: 9px; background: var(--ink); }
+      .view-card__line.short { width: 68%; }.view-card__line.red { width: 45%; background: var(--red); }
+      .view-card__tags { display: flex; flex-wrap: wrap; gap: 7px; }.view-card__tags i { width: 18px; height: 18px; background: var(--red); }
+      .view-card__list { display: grid; gap: 10px; }.view-card__list i { display: block; height: 38px; border: 2px solid var(--ink); background: var(--cream); }
+      .view-card figcaption { margin-top: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .76rem; font-weight: 900; text-transform: uppercase; }
+
+      .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; counter-reset: step; }
+      .step { position: relative; padding: 84px 24px 26px; border: 3px solid var(--ink); background: var(--cream); }
+      .step::before { position: absolute; top: 20px; left: 24px; color: var(--red); content: "0" counter(step); counter-increment: step; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.8rem; font-weight: 900; }
+      .step p { margin-bottom: 0; color: #454837; font-size: .96rem; }
+
+      .privacy { background: var(--ink); color: var(--cream); }
+      .privacy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(36px, 10vw, 140px); align-items: center; }
+      .privacy p { color: #ded9c6; }
+      .privacy-list { margin: 0; padding: 0; list-style: none; border-top: 2px solid #6f7157; }
+      .privacy-list li { padding: 16px 0; border-bottom: 2px solid #6f7157; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88rem; font-weight: 800; }
+      .privacy-list li::before { margin-right: 10px; color: var(--red); content: "■"; }
+      .privacy .button { border-color: var(--cream); background: var(--cream); }
+
+      footer { padding: 30px 0; background: var(--paper); }
+      .footer-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; font-weight: 800; }
+      .footer-row a { text-decoration: none; }
+
+      @media (max-width: 760px) {
+        .shell { width: min(100% - 28px, 620px); }
+        .topbar { min-height: 68px; }
+        nav { gap: 12px; font-size: .7rem; }
+        nav a:nth-child(2) { display: none; }
+        .hero { padding-top: 48px; }
+        .hero-grid, .intro-grid, .privacy-grid { grid-template-columns: 1fr; }
+        .hero-copy { order: 1; }
+        .device { width: min(80%, 340px); }
+        .feature-list, .steps { grid-template-columns: 1fr; }
+        .feature { min-height: auto; }
+        .view-strip { grid-template-columns: repeat(5, 210px); margin-right: -14px; }
+        section { padding: 64px 0; }
+        .footer-row { align-items: flex-start; flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="shell topbar">
+        <a class="brand" href="#top">
+          <span class="brand-mark" aria-hidden="true">REC</span>
+          <span>Retro Recorder</span>
+        </a>
+        <nav aria-label="Primary navigation">
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#privacy">Privacy</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="shell hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Record the moment. Keep the meaning.</p>
+            <h1>Voice notes with a memory.</h1>
+            <p class="lead">Retro Recorder turns a recording into something you can revisit: live text, searchable moments, playback tags, and the context around what you captured.</p>
+            <div class="button-row">
+              <a class="button primary" href="#how-it-works">Explore the workflow</a>
+              <a class="button" href="#features">See features</a>
+            </div>
+          </div>
+          <div class="device" aria-label="Illustrated Retro Recorder recording screen">
+            <div class="pixel-screen">
+              <div class="pixel-screen__title"><span>RETRO RECORDER</span><span class="pixel-dot"></span></div>
+              <p class="pixel-screen__status">INPUT · BUILT-IN MIC &nbsp; NR · ON</p>
+              <div class="pixel-time">00:24</div>
+              <div class="meters" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="pixel-screen__live">LIVE TEXT<br>Capture the thought while it is still happening.</div>
+              <div class="pixel-screen__controls" aria-hidden="true"><b>II</b><b>REC</b><b>TAG</b></div>
+            </div>
+            <span class="device-label">REC READY</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="ticker" aria-hidden="true">
+        <div class="ticker-track">
+          <span>Record · Transcribe · Tag · Replay · Remember · </span>
+          <span>Record · Transcribe · Tag · Replay · Remember · </span>
+          <span>Record · Transcribe · Tag · Replay · Remember · </span>
+          <span>Record · Transcribe · Tag · Replay · Remember · </span>
+        </div>
+      </div>
+
+      <section id="features">
+        <div class="shell intro-grid">
+          <div>
+            <p class="eyebrow">Built for the useful details</p>
+            <h2>A recorder that stays with the conversation.</h2>
+            <p>Capture an idea, an interview, a meeting, or a passing sound without leaving the app. Retro Recorder pairs a tactile recording interface with tools that make the recording easy to use afterward.</p>
+            <aside class="sticky-note">Choose an input source, recording format, sample rate, language, and audio processing before you press record.</aside>
+          </div>
+          <div class="feature-list">
+            <article class="feature">
+              <div class="feature-mark">01</div>
+              <h3>Live transcription</h3>
+              <p>See speech become text while you record. Select the recognition language and keep the transcript visible as it grows.</p>
+            </article>
+            <article class="feature">
+              <div class="feature-mark">02</div>
+              <h3>Sound your way</h3>
+              <p>Use the built-in microphone, a headset, or a connected external microphone. Configure audio format and quality for each recording.</p>
+            </article>
+            <article class="feature">
+              <div class="feature-mark">03</div>
+              <h3>Find the moment</h3>
+              <p>Add time tags while recording or playing back. Jump between highlights in the waveform or synchronized transcript.</p>
+            </article>
+            <article class="feature">
+              <div class="feature-mark">04</div>
+              <h3>Clean and protect</h3>
+              <p>Choose audio processing such as noise reduction and echo cancellation, then keep recordings available through private iCloud sync.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="screens" aria-labelledby="screens-heading">
+        <div class="shell">
+          <p class="eyebrow">One recording, many useful views</p>
+          <h2 id="screens-heading">From a live signal to a usable record.</h2>
+          <p class="lead">The interface is deliberately focused: record, read, replay, and return to exactly the part you need.</p>
+          <div class="view-strip">
+            <figure class="view-card"><div class="view-card__mock"><div class="view-card__head"></div><div class="view-card__wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="view-card__line"></div><div class="view-card__line short"></div></div><figcaption>01 · Record</figcaption></figure>
+            <figure class="view-card"><div class="view-card__mock"><div class="view-card__head"></div><div class="view-card__line"></div><div class="view-card__line short"></div><div class="view-card__line"></div><div class="view-card__line red"></div><div class="view-card__line short"></div><div class="view-card__line"></div></div><figcaption>02 · Live text</figcaption></figure>
+            <figure class="view-card"><div class="view-card__mock"><div class="view-card__head"></div><div class="view-card__wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="view-card__tags"><i></i><i></i><i></i></div><div class="view-card__line"></div></div><figcaption>03 · Playback</figcaption></figure>
+            <figure class="view-card"><div class="view-card__mock"><div class="view-card__head"></div><div class="view-card__line short"></div><div class="view-card__line"></div><div class="view-card__line red"></div><div class="view-card__line short"></div><div class="view-card__line"></div></div><figcaption>04 · Your sound</figcaption></figure>
+            <figure class="view-card"><div class="view-card__mock"><div class="view-card__head"></div><div class="view-card__list"><i></i><i></i><i></i><i></i></div></div><figcaption>05 · History</figcaption></figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works">
+        <div class="shell">
+          <p class="eyebrow">A simple routine</p>
+          <h2>Make every recording easier to return to.</h2>
+          <div class="steps">
+            <article class="step">
+              <h3>Set the capture</h3>
+              <p>Pick an available microphone, audio format, sample rate, recognition language, and processing options. Retro Recorder remembers your recent choices.</p>
+            </article>
+            <article class="step">
+              <h3>Record and mark</h3>
+              <p>Start recording and watch the live visualization and transcript. Add a tag whenever a point deserves a fast route back.</p>
+            </article>
+            <article class="step">
+              <h3>Review with context</h3>
+              <p>Replay from the waveform or the text, edit the transcript, rename the recording, share selected files, and inspect recording details.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="privacy" id="privacy">
+        <div class="shell privacy-grid">
+          <div>
+            <p class="eyebrow">Your recordings, your account</p>
+            <h2>Built with a private place to keep your work.</h2>
+            <p>Recordings, transcripts, tags, and their context stay on your device. When iCloud is available, Retro Recorder can synchronize your data through your private CloudKit database on devices signed in to the same Apple Account.</p>
+            <a class="button" href="privacy-policy.html">Read the privacy policy</a>
+          </div>
+          <ul class="privacy-list">
+            <li>No advertising identifiers</li>
+            <li>No selling of recording data</li>
+            <li>Sharing is always initiated by you</li>
+            <li>Private iCloud synchronization</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="shell footer-row">
+        <span>Retro Recorder: Voice &amp; Text</span>
+        <a href="https://github.com/narss711/RetroRecorder">GitHub</a>
+        <span>© 2026 Retro Recorder</span>
+      </div>
+    </footer>
+  </body>
+</html>
