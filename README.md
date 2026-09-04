@@ -55,15 +55,6 @@ RetroRecorder is a SwiftUI iOS recording app with a retro tape-recorder interfac
 - 每种界面语言提供匹配字形的开源复古字体选择，避免缺字。
 - 支持 CloudKit Private Database 同步录音记录与关联信息；个人签名安装版本会关闭 CloudKit 能力，正式签名版本可启用同步。
 
-## Media Widget
-
-Open the app once, use the "桌面 Widget" panel to choose a GIF or short video from Photos, then add the "动态媒体" widget from the iOS Home Screen widget gallery.
-
-The app converts the selected media into up to 24 JPEG frames and saves them in the shared App Group container. The widget reads those frames and renders them with rotating sector masks driven by `ClockHandRotationKit`, while still keeping a manual next-frame button for true frame advancement. This follows the common `clockHandRotationEffect` widget-animation trick: each frame has a large rotating mask, so fixed pixels cycle through the imported frames without relying on WidgetKit timeline refreshes. This depends on undocumented clock-hand rotation behavior, so treat it as a device-side experiment rather than App Store-safe WidgetKit animation.
-
-Before running on a physical device, enable this App Group for both the app target and widget extension in your Apple Developer account:
-
-`group.com.narss711.RetroRecorder.shared`
 
 ## Running
 
